@@ -1,17 +1,103 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql",
-  url = env("DATABASE_URI")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-model User {
-  id int 
+model User{
+  id Int @id @default(autoincrement())
+  username String @unique
+  email String @unique
+  mobileNumber String
+  password String
+  createdAt DateTime @default(now())
+  bookings Booking[]
 }
+
+model Train {
+  id Int @id @default(autoincrement())
+  trainNumber Int @unique
+  trainName String 
+  sourceStation String
+  destinationStation String
+  coaches Coach[]
+  schedules Schedule[]
+}
+
+model Schedule{
+  id Int @id @default(autoincrement())
+  platformId Int
+  trainId Int 
+  platform Platform @relation(fields: [platformId] , references: [id]) 
+  train Train @relation(fields: [trainId] , references: [id])
+  arrivaltime DateTime @default(now())
+  departureTime DateTime 
+  date DateTime
+  booking Booking[]
+}
+
+model Station {
+  id Int @id @default(autoincrement())
+  stationName String
+  stationCode String @unique
+  platform Platform[]
+}
+
+
+model Platform {
+  id Int @id @default(autoincrement())
+  platformNumber Int
+  stationId Int
+  station Station @relation(fields: [stationId] , references: [id])
+  schedule Schedule[]
+}
+
+model Coach{
+  id Int @id @default(autoincrement())
+  coachNumber String 
+  coachType String 
+  trainId Int 
+  train Train @relation(fields: [trainId], references: [id])
+  seat Seat[]
+}
+
+model Seat{
+  id Int @id @default(autoincrement())
+  seatNumber Int
+  seatName String
+  coachId Int 
+  coach Coach @relation(fields: [coachId] , references: [id])
+  booking Booking[]
+}
+
+model Booking{
+  id Int @id @default(autoincrement())
+  userId Int 
+  seatId Int
+  scheduleId Int
+  user User @relation(fields: [userId] , references: [id])
+  seat Seat @relation(fields: [seatId] , references: [id])
+  schedule Schedule @relation(fields: [scheduleId] , references: [id])
+  status String @default("Booked")
+  bookingAt DateTime @default(now())
+  payment Payment?
+}
+
+model Payment{
+  id Int @id @default(autoincrement())
+  bookingId Int @unique
+  booking Booking @relation(fields: [bookingId] , references: [id])
+  status String @default("Pending")
+  amount Int
+}
+
