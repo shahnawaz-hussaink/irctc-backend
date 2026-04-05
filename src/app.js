@@ -18,4 +18,9 @@ app.use(
     })
 );
 
+// routes
+import authRoute from './routes/auth.route.js'
+
+app.use("/api/v1/auth",authRoute)
+
 export { app };

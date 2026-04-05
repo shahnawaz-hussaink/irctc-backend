@@ -18,7 +18,7 @@ model User{
   id Int @id @default(autoincrement())
   username String @unique
   email String @unique
-  mobileNumber String
+  mobileNumber String @unique
   password String
   createdAt DateTime @default(now())
   bookings Booking[]
