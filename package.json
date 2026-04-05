@@ -1,0 +1,29 @@
+{
+  "name": "irctc-backend",
+  "version": "1.0.0",
+  "description": "this is a irctc booking system backend for limited trains ",
+  "keywords": [
+    "irctc",
+    "booking",
+    "system",
+    "backend",
+    "logic",
+    "trains",
+    "seats",
+    "coach"
+  ],
+  "license": "ISC",
+  "author": "shahnawaz hussain",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.6.0",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "prisma": "^7.6.0"
+  }
+}
