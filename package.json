@@ -18,12 +18,14 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node server.js"
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.0",
     "express": "^5.2.1",
+    "nodemon": "^3.1.14",
     "prisma": "^6.19.3"
   }
 }
