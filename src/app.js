@@ -20,7 +20,9 @@ app.use(
 
 // routes
 import authRoute from './routes/auth.route.js'
+import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
 app.use("/api/v1/auth",authRoute)
+app.use(errorHandler)
 
 export { app };
