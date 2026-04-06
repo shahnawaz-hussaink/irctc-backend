@@ -22,6 +22,7 @@ model User{
   password String
   createdAt DateTime @default(now())
   bookings Booking[]
+  refreshToken String?
 }
 
 model Train {
