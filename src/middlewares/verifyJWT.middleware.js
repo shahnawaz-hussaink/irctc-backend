@@ -1,23 +1,33 @@
-import prisma from "../db/prisma";
-import { ApiError } from "../utils/apiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import prisma from "../db/prisma.js";
+import { ApiError } from "../utils/apiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import jwt from "jsonwebtoken";
 
-const verifyJWT = asyncHandler(async (req, res, next) => {
-    const { userId } =
+const verifyJWT = asyncHandler(async (req, _, next) => {
+    const token =
         req.cookies?.accessToken ||
         req.header("Authorization")?.replace("bearer");
 
-    if (!userId) {
-        throw new ApiError(401, "Access Denied");
+    if (!token) {
+        throw new ApiError(401, "No Access Token");
     }
 
-    const user = await prisma.user.findFirst({ where: { id: userId } });
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    if (!decodedToken) {
+        throw new ApiError(401, "Access Denied, Invalid or No Access Token");
+    }
 
+    const user = await prisma.user.findFirst({
+        where: { id: decodedToken.id },
+    });
     if (!user) {
-        throw new ApiError(400, "Access Token Expired");
+        throw new ApiError(
+            400,
+            "Expired Access Token, Generate New Access Token"
+        );
     }
-
     req.user = user;
-
     next();
 });
+
+export { verifyJWT };

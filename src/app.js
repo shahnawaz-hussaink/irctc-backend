@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -18,11 +19,13 @@ app.use(
     })
 );
 
+app.use(cookieParser());
+
 // routes
-import authRoute from './routes/auth.route.js'
+import authRoute from "./routes/auth.route.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
-app.use("/api/v1/auth",authRoute)
-app.use(errorHandler)
+app.use("/api/v1/auth", authRoute);
+app.use(errorHandler);
 
 export { app };
