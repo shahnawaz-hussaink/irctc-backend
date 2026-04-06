@@ -86,6 +86,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const UpdatedUser = await prisma.user.update({
         where: { email: email },
         data: { refreshToken: refreshToken },
+        select: { username:true , email:true, mobileNumber:true},
     });
 
     if (!UpdatedUser) {
@@ -102,9 +103,21 @@ const loginUser = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .cookie("accessToken",accessToken,options)
-        .cookie("refreshToken",refreshToken,options)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
         .json(new ApiResponse(200, UpdatedUser, "Login Successfull"));
 });
 
-export { registerUser, loginUser };
+const logoutUser = asyncHandler(async (req, res) => {
+    const options = {
+        httpOnly: true,
+        secure: true,
+    };
+    return res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "Logout Successfull"));
+});
+
+export { registerUser, loginUser, logoutUser };
