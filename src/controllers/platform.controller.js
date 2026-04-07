@@ -26,6 +26,7 @@ const createPlatform = asyncHandler(async (req, res) => {
             platformNumber,
             stationId,
         },
+        include : {station : true}
     });
 
     if (!platform) {
