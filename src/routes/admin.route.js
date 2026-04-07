@@ -8,7 +8,6 @@ const router = Router();
 
 router.route("/station").post(createStation);
 router.route("/stations/:stationId/platforms").post(createPlatform);
-router.route("/train").post(createTrain)
-router.route("/trains/:trainNumber/coachs").post(createCoach)
+router.route("/train").post(createTrain);
+router.route("/trains/:trainNumber/coaches").post(createCoach);
 export default router;
- 
