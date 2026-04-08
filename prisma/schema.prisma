@@ -41,7 +41,7 @@ model Schedule{
   trainId Int 
   platform Platform @relation(fields: [platformId] , references: [id]) 
   train Train @relation(fields: [trainId] , references: [id])
-  arrivaltime DateTime @default(now())
+  arrivalTime DateTime @default(now())
   departureTime DateTime 
   date DateTime
   booking Booking[]
