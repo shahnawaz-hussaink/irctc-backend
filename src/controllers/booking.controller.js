@@ -7,7 +7,7 @@ const bookSeat = asyncHandler(async (req, res) => {
     const coachType = req.body.coachType;
     const scheduleId = parseInt(req.body.scheduleId);
 
-    console.log(req.user.id)
+    console.log(req.user.id);
     console.log(coachType, scheduleId);
 
     if (!coachType || !scheduleId) {
@@ -42,9 +42,10 @@ const bookSeat = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Seat not available");
         }
 
+        await txn.$queryRaw`SELECT * FROM "Seat" WHERE id=${seat.id} FOR UPDATE`;
+
         const isAlreadyBooked = await txn.booking.findFirst({
             where: {
-                userId : req.user?.id ,
                 seatId: seat.id,
                 scheduleId,
                 status: { not: "Cancelled" },
@@ -73,9 +74,7 @@ const bookSeat = asyncHandler(async (req, res) => {
 
         return newBooking;
     });
-    return res
-        .status(200)
-        .json(new ApiResponse(200, booking, "Seat Booked"));
+    return res.status(200).json(new ApiResponse(200, booking, "Seat Booked"));
 });
 
 export { bookSeat };
