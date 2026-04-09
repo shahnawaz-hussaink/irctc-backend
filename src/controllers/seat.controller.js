@@ -7,8 +7,6 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
     const coachType = req.query.coachType;
     const scheduleId = parseInt(req.params.scheduleId);
 
-    console.log(coachType, scheduleId);
-
     if (!scheduleId || !coachType) {
         throw new ApiError(400, "All Fields Are Required");
     }
@@ -22,42 +20,34 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
         throw new ApiError(404, "NO Schedule Found");
     }
 
-    const allSeats = await prisma.seat.findMany({
+    const availableSeats = await prisma.seat.findMany({
         where: {
             coach: {
                 trainId: schedule.trainId,
                 coachType: coachType,
             },
-        },
-        include: { coach: true },
-    });
-
-    if (allSeats == null) {
-        throw new ApiError(404, "NO Seasts");
-    }
-
-    const bookedBookings = await prisma.booking.findMany({
-        where: {
-            scheduleId,
-            status: { not: "Cancelled" },
-            seat: {
-                coach: {
-                    coachType,
-                    trainId: schedule.trainId,
+            booking: {
+                none: {
+                    scheduleId: scheduleId,
+                    status: {
+                        not: "Cancelled",
+                    },
                 },
             },
         },
-        select: { seatId: true },
+        include: {
+            coach: true,
+        },
     });
-
-    const bookedSeatIds = bookedBookings.map((b) => b.seatId);
-    const availableSeats = allSeats.filter(
-        (seat) => !bookedSeatIds.includes(seat.id)
-    );
-
     return res
         .status(200)
-        .json(new ApiResponse(200, availableSeats.length, "Got all SEats"));
+        .json(
+            new ApiResponse(
+                200,
+                { availableSeat: availableSeats.length, seats: availableSeats },
+                "Got all  avaliable Seats"
+            )
+        );
 });
 
 export { getAvailableSeats };
