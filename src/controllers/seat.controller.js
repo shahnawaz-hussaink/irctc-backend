@@ -44,7 +44,7 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                { availableSeat: availableSeats.length, seats: availableSeats },
+                { availableSeat: availableSeats.length },
                 "Got all  avaliable Seats"
             )
         );
