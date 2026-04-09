@@ -84,9 +84,27 @@ const searchTrain = asyncHandler(async (req, res) => {
         throw new ApiError(400, "No train");
     }
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, schedules, "sucess"));
+    return res.status(200).json(new ApiResponse(200, schedules, "sucess"));
 });
 
-export { createTrain, searchTrain };
+const getTrainById = asyncHandler(async (req, res) => {
+    const trainId = parseInt(req.body.trainId);
+
+    if (!trainId) {
+        throw new ApiError(400, "All fields are Required");
+    }
+
+    const train = await prisma.schedule.findFirst({
+        where: { trainId },
+    });
+
+    if (!train) {
+        throw new ApiError(404, "No Train Found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, train, "Fetched Train Successfully"));
+});
+
+export { createTrain, searchTrain, getTrainById };
