@@ -23,11 +23,11 @@ app.use(cookieParser());
 
 // routes
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
-import authRoute from "./routes/auth.route.js";
+import authRoute from "./routes/user.route.js";
 import adminRoute from './routes/admin.route.js'
 
 
-app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/user", authRoute);
 app.use("/api/v1/admin", adminRoute)
 app.use(errorHandler);
 

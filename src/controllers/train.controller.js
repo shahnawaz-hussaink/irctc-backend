@@ -11,7 +11,7 @@ const createTrain = asyncHandler(async (req, res) => {
     }
 
     const isTrainExist = await prisma.train.findFirst({
-        where: { OR: [{ trainName }, { trainName }] },
+        where: { OR: [{ trainName }, { trainNumber }] },
     });
 
     if (isTrainExist) {
@@ -55,4 +55,39 @@ const createTrain = asyncHandler(async (req, res) => {
         );
 });
 
-export { createTrain };
+const searchTrain = asyncHandler(async (req, res) => {
+    const { from, to, date } = req.query;
+
+    if (!from || !to || !date) {
+        throw new ApiError(400, "All fields aare Required");
+    }
+
+    if (from === to) {
+        throw new ApiError(400, "From and To MUST be different");
+    }
+
+    const schedules = await prisma.schedule.findFirst({
+        where: {
+            date: new Date(date),
+            train: {
+                sourceStation: from.toUpperCase().trim(),
+                destinationStation: to.toUpperCase().trim(),
+            },
+        },
+        include: {
+            train: true,
+            platform: true,
+        },
+    });
+    console.log(schedules)
+
+    if (!schedules) {
+        throw new ApiError(400, "No train");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, schedules, "sucess"));
+});
+
+export { createTrain, searchTrain };
