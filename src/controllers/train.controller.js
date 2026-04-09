@@ -79,7 +79,6 @@ const searchTrain = asyncHandler(async (req, res) => {
             platform: true,
         },
     });
-    console.log(schedules)
 
     if (!schedules) {
         throw new ApiError(400, "No train");
