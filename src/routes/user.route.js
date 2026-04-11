@@ -12,7 +12,10 @@ import {
     cancelBooking,
     getBooking,
 } from "../controllers/booking.controller.js";
-import { createPayment, updatePayment } from "../controllers/payment.controller.js";
+import {
+    createPayment,
+    updatePayment,
+} from "../controllers/payment.controller.js";
 
 const router = Router();
 
@@ -27,6 +30,8 @@ router.route("/bookings/:bookingId/get-booking").get(verifyJWT, getBooking);
 router
     .route("/bookings/:bookingId/cancel-booking")
     .patch(verifyJWT, cancelBooking);
-router.route("/bookings/:bookingId/payment").post(verifyJWT,createPayment)
-router.route("/bookings/:paymentId/update-payment").patch(verifyJWT,updatePayment)
+router.route("/bookings/:bookingId/payment").post(verifyJWT, createPayment);
+router
+    .route("/bookings/:paymentId/update-payment")
+    .patch(verifyJWT, updatePayment);
 export default router;
