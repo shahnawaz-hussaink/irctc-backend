@@ -29,7 +29,6 @@ const createPayment = asyncHandler(async (req, res) => {
         where: {
             bookingId,
         },
-        
     });
 
     if (isPaymentExist) {
@@ -62,4 +61,59 @@ const createPayment = asyncHandler(async (req, res) => {
 
 // payment update -> first manaul and then will integrate razorpay api 
 
-export { createPayment };
+const updatePayment = asyncHandler(async (req, res) => {
+    const paymentId = parseInt(req.params.paymentId);
+    const status = req.body.status;
+
+    console.log(paymentId, status);
+
+    if (!paymentId || !status) {
+        throw new ApiError(400, "Payment Or Status is not provided");
+    }
+
+    const isPaymentExist = await prisma.payment.findUnique({
+        where: { id: paymentId },
+        include: {
+            booking: true,
+        },
+    });
+    if (!isPaymentExist) {
+        throw new ApiError(404, "No Payment Found with this paymentId");
+    }
+
+    const isBookingExist = await prisma.booking.findFirst({
+        where: { id: isPaymentExist.booking.id },
+    });
+
+    if (!isBookingExist) {
+        throw new ApiError(404, "Booking does not Exists");
+    }
+
+    if (isBookingExist.status === "Cancelled") {
+        throw new ApiError(
+            400,
+            "Booking is Already Cancelled, cannot Access Payment"
+        );
+    }
+
+    if (isPaymentExist.booking.userId !== req.user.id) {
+        throw new ApiError(401, "Not Authorized User");
+    }
+
+    const payment = await prisma.payment.update({
+        where: { id: paymentId },
+        data: { status },
+    });
+
+    if (!payment) {
+        throw new ApiError(
+            500,
+            "Something Went wrong while Updating the Payment"
+        );
+    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, payment, "Updated Payment Successfully"));
+});
+
+export { createPayment, updatePayment };
