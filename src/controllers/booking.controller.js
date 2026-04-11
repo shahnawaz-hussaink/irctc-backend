@@ -87,7 +87,7 @@ const getBooking = asyncHandler(async (req, res) => {
     const booking = await prisma.booking.findUnique({
         where: { id: bookingId },
         select: {
-            status : true ,
+            status: true,
             schedule: {
                 select: {
                     arrivalTime: true,
@@ -120,6 +120,40 @@ const getBooking = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, booking, "Fetched Booking Successfully"));
 });
 
+const cancelBooking = asyncHandler(async (req, res) => {
+    const bookingId = parseInt(req.params.bookingId);
 
+    if (!bookingId) {
+        throw new ApiError(400, "Booking Id not Provided");
+    }
 
-export { bookSeat, getBooking };
+    const isBookingExist = await prisma.booking.findUnique({
+        where: { id: bookingId },
+    });
+
+    if (!isBookingExist) {
+        throw new ApiError(404, "Booking Not Found");
+    }
+
+    if (isBookingExist.status === "Cancelled") {
+        throw new ApiError(400, "Booking Already Cancelled");
+    }
+
+    const cancelledBooking = await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+            status: "Cancelled",
+        },
+    });
+
+    if (!cancelledBooking) {
+        throw new ApiError(
+            500,
+            "Something went wrong while Cancelling Booking"
+        );
+    }
+
+    return res.status(200).json(new ApiResponse(200, {}, "Booking Cancelled"));
+});
+
+export { bookSeat, getBooking, cancelBooking };

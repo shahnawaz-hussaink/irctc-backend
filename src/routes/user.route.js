@@ -9,6 +9,7 @@ import { getTrainById, searchTrain } from "../controllers/train.controller.js";
 import { getAvailableSeats } from "../controllers/seat.controller.js";
 import {
     bookSeat,
+    cancelBooking,
     getBooking,
 } from "../controllers/booking.controller.js";
 
@@ -22,4 +23,8 @@ router.route("/get-train-by-id").get(getTrainById);
 router.route("/available-seats/:scheduleId").get(getAvailableSeats);
 router.route("/book-seat").get(verifyJWT, bookSeat);
 router.route("/bookings/:bookingId/get-booking").get(verifyJWT, getBooking);
+router
+    .route("/bookings/:bookingId/cancel-booking")
+    .patch(verifyJWT, cancelBooking);
+
 export default router;
