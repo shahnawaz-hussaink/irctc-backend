@@ -16,7 +16,6 @@ const createCoach = asyncHandler(async (req, res) => {
         where: { trainNumber },
     });
 
-    // console.log(isTrainExist);
     if (!isTrainExist) {
         throw new ApiError(400, "Train Not Exist");
     }

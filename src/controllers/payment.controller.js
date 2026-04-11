@@ -59,13 +59,11 @@ const createPayment = asyncHandler(async (req, res) => {
     );
 });
 
-// payment update -> first manaul and then will integrate razorpay api 
+// payment update -> first manaul and then will integrate razorpay api
 
 const updatePayment = asyncHandler(async (req, res) => {
     const paymentId = parseInt(req.params.paymentId);
     const status = req.body.status;
-
-    console.log(paymentId, status);
 
     if (!paymentId || !status) {
         throw new ApiError(400, "Payment Or Status is not provided");
@@ -100,12 +98,21 @@ const updatePayment = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Not Authorized User");
     }
 
-    const payment = await prisma.payment.update({
-        where: { id: paymentId },
-        data: { status },
+    const updatedPayment = await prisma.$transaction(async (txn) => {
+        const payment = await txn.payment.update({
+            where: { id: paymentId },
+            data: { status },
+        });
+
+        await txn.booking.update({
+            where: { id: isBookingExist.id },
+            data: { status: status === "Success" ? "Confirmed" : "Failed" },
+        });
+
+        return payment;
     });
 
-    if (!payment) {
+    if (!updatedPayment) {
         throw new ApiError(
             500,
             "Something Went wrong while Updating the Payment"
@@ -113,7 +120,7 @@ const updatePayment = asyncHandler(async (req, res) => {
     }
     return res
         .status(200)
-        .json(new ApiResponse(200, payment, "Updated Payment Successfully"));
+        .json(new ApiResponse(200, updatedPayment, "Updated Payment Successfully"));
 });
 
 export { createPayment, updatePayment };
