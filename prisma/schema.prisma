@@ -68,6 +68,7 @@ model Coach{
   coachNumber String 
   coachType String 
   trainId Int 
+  price Int @default(0)
   train Train @relation(fields: [trainId], references: [id])
   seat Seat[]
 }

@@ -5,12 +5,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { generateSeats } from "../utils/generateSeats.js";
 
 const createCoach = asyncHandler(async (req, res) => {
-    const { coachNumber, coachType } = req.body;
+    const { coachNumber, coachType, price } = req.body;
     const trainNumber = parseInt(req.params.trainNumber);
 
-    console.log(trainNumber, coachNumber, coachType);
-
-    if (!coachNumber || !coachType || !trainNumber) {
+    if (!coachNumber || !coachType || !trainNumber || !price) {
         throw new ApiError(400, "All fields are Required");
     }
 
@@ -37,17 +35,20 @@ const createCoach = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Coach Number or Type Exist in Train");
     }
 
-
     const [coach] = await prisma.$transaction(async (tx) => {
-    const coach = await tx.coach.create({
-      data: { coachNumber, coachType:coachType.toUpperCase().trim(), trainId:isTrainExist.id },
+        const coach = await tx.coach.create({
+            data: {
+                coachNumber,
+                coachType: coachType.toUpperCase().trim(),
+                trainId: isTrainExist.id,
+                price 
+            },
+        });
+
+        await generateSeats(coach.coachNumber, coach.coachType, coach.id, tx);
+
+        return [coach];
     });
-
-    await generateSeats(coach.coachNumber, coach.coachType, coach.id, tx);
-
-    return [coach];
-    });
-
 
     if (!coach) {
         throw new ApiError(500, "Something went wrong while Creating Coach");

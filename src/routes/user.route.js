@@ -12,6 +12,7 @@ import {
     cancelBooking,
     getBooking,
 } from "../controllers/booking.controller.js";
+import { createPayment } from "../controllers/payment.controller.js";
 
 const router = Router();
 
@@ -26,5 +27,5 @@ router.route("/bookings/:bookingId/get-booking").get(verifyJWT, getBooking);
 router
     .route("/bookings/:bookingId/cancel-booking")
     .patch(verifyJWT, cancelBooking);
-
+router.route("/bookings/:bookingId/payment").post(verifyJWT,createPayment)
 export default router;
