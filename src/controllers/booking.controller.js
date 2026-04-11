@@ -77,4 +77,49 @@ const bookSeat = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, booking, "Seat Booked"));
 });
 
-export { bookSeat };
+const getBooking = asyncHandler(async (req, res) => {
+    const bookingId = parseInt(req.params.bookingId);
+
+    if (!bookingId) {
+        throw new ApiError(400, "Booking Id not provided");
+    }
+
+    const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        select: {
+            status : true ,
+            schedule: {
+                select: {
+                    arrivalTime: true,
+                    departureTime: true,
+                    date: true,
+                    train: {
+                        select: {
+                            trainNumber: true,
+                            trainName: true,
+                        },
+                    },
+                },
+            },
+            seat: {
+                select: {
+                    seatNumber: true,
+                    seatName: true,
+                    coachId: true,
+                },
+            },
+        },
+    });
+
+    if (!booking) {
+        throw new ApiError(404, "Booking Not Found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, booking, "Fetched Booking Successfully"));
+});
+
+
+
+export { bookSeat, getBooking };
