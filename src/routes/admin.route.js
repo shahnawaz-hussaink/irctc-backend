@@ -5,11 +5,12 @@ import { createTrain } from "../controllers/train.controller.js";
 import { createCoach } from "../controllers/coach.controller.js";
 import { createSchedule } from "../controllers/schedule.controller.js";
 import { authorizeAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
-import { registerAdmin } from "../controllers/auth.controller.js";
+import { loginUser, registerAdmin } from "../controllers/auth.controller.js";
 
 const router = Router();
 
-router.route("/register-admin").post(registerAdmin)
+router.route("/register-admin").post(registerAdmin);
+router.route("/login").get(loginUser);
 
 router.use(verifyJWT, authorizeAdmin);
 

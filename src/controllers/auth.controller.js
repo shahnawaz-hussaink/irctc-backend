@@ -68,7 +68,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Wrong Password");
     }
 
-    const accessToken = generateAccessToken(user.id);
+    const accessToken = generateAccessToken(user.id,user.email,user.role);
     if (!accessToken) {
         throw new ApiError(
             500,
@@ -175,5 +175,6 @@ const registerAdmin = asyncHandler(async (req, res) => {
             )
         );
 });
+
 
 export { registerUser, loginUser, logoutUser, registerAdmin };

@@ -30,7 +30,7 @@ const verifyJWT = asyncHandler(async (req, _, next) => {
     next();
 });
 
-const authorizeAdmin = asyncHandler(async (req, res) => {
+const authorizeAdmin = asyncHandler(async (req, res,next) => {
     if (req.user?.role === "ADMIN") {
         throw new ApiError(401, "Not Authorized Admin");
     }
