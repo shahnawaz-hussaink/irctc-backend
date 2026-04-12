@@ -14,15 +14,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER 
+  ADMIN
+}
+
 model User{
   id Int @id @default(autoincrement())
   username String @unique
   email String @unique
   mobileNumber String @unique
-  password String
+  password String 
   createdAt DateTime @default(now())
   bookings Booking[]
   refreshToken String?
+  role Role @default(USER)
 }
 
 model Train {

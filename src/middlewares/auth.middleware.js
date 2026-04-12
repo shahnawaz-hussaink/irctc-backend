@@ -30,4 +30,11 @@ const verifyJWT = asyncHandler(async (req, _, next) => {
     next();
 });
 
-export { verifyJWT };
+const authorizeAdmin = asyncHandler(async (req, res) => {
+    if (req.user?.role === "ADMIN") {
+        throw new ApiError(401, "Not Authorized Admin");
+    }
+    next();
+});
+
+export { verifyJWT , authorizeAdmin };

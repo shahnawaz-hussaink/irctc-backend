@@ -4,7 +4,7 @@ import {
     logoutUser,
     registerUser,
 } from "../controllers/auth.controller.js";
-import { verifyJWT } from "../middlewares/verifyJWT.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { getTrainById, searchTrain } from "../controllers/train.controller.js";
 import { getAvailableSeats } from "../controllers/seat.controller.js";
 import {
@@ -34,4 +34,5 @@ router.route("/bookings/:bookingId/payment").post(verifyJWT, createPayment);
 router
     .route("/bookings/:paymentId/update-payment")
     .patch(verifyJWT, updatePayment);
+
 export default router;

@@ -86,7 +86,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const UpdatedUser = await prisma.user.update({
         where: { email: email },
         data: { refreshToken: refreshToken },
-        select: { username:true , email:true, mobileNumber:true},
+        select: { username: true, email: true, mobileNumber: true },
     });
 
     if (!UpdatedUser) {
@@ -101,7 +101,6 @@ const loginUser = asyncHandler(async (req, res) => {
         secure: true,
     };
 
-    
     return res
         .status(200)
         .cookie("accessToken", accessToken, options)
@@ -121,4 +120,60 @@ const logoutUser = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Logout Successfull"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const registerAdmin = asyncHandler(async (req, res) => {
+    const { username, email, password, mobileNumber, admin_secret } = req.body;
+    if (!username || !email || !mobileNumber || !password || !admin_secret) {
+        throw new ApiError(400, "All fields are required");
+    }
+
+    if (admin_secret !== process.env.ADMIN_SECRET) {
+        throw new ApiError(401, "Not Authorized");
+    }
+
+    const existingAdmin = await prisma.user.findFirst({
+        where: {
+            OR: [
+                { email: email },
+                { username: username },
+                { mobileNumber: mobileNumber },
+            ],
+        },
+    });
+
+    if (existingAdmin) {
+        throw new ApiError(400, "Admin Already exist , try to login");
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    if (!hashedPassword) {
+        throw new ApiError(500, "Somethign went wrong while password Hashing");
+    }
+
+    const admin = await prisma.user.create({
+        data: {
+            email: email.toLowerCase().trim(),
+            username: username,
+            mobileNumber: mobileNumber,
+            password: hashedPassword,
+            role: "ADMIN",
+        },
+    });
+
+    const { password: _, ...adminWithoutPass } = admin;
+
+    if (!admin) {
+        throw new ApiError(500, "Something went wrong while Registering Admin");
+    }
+
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                adminWithoutPass,
+                "Registered Admin successfully"
+            )
+        );
+});
+
+export { registerUser, loginUser, logoutUser, registerAdmin };

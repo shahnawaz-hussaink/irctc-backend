@@ -4,8 +4,14 @@ import { createPlatform } from "../controllers/platform.controller.js";
 import { createTrain } from "../controllers/train.controller.js";
 import { createCoach } from "../controllers/coach.controller.js";
 import { createSchedule } from "../controllers/schedule.controller.js";
+import { authorizeAdmin, verifyJWT } from "../middlewares/auth.middleware.js";
+import { registerAdmin } from "../controllers/auth.controller.js";
 
 const router = Router();
+
+router.route("/register-admin").post(registerAdmin)
+
+router.use(verifyJWT, authorizeAdmin);
 
 router.route("/station").post(createStation);
 router.route("/stations/:stationId/platforms").post(createPlatform);
