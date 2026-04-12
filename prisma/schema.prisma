@@ -43,9 +43,11 @@ model Train {
 
 model Schedule{
   id Int @id @default(autoincrement())
-  platformId Int
+  sourcePlatformId Int
+  destinationPlatformId Int
   trainId Int 
-  platform Platform @relation(fields: [platformId] , references: [id]) 
+  sourcePlatform      Platform @relation("source", fields: [sourcePlatformId], references: [id])
+  destinationPlatform Platform @relation("destination", fields: [destinationPlatformId], references: [id])
   train Train @relation(fields: [trainId] , references: [id])
   arrivalTime DateTime @default(now())
   departureTime DateTime 
@@ -66,7 +68,8 @@ model Platform {
   platformNumber Int
   stationId Int
   station Station @relation(fields: [stationId] , references: [id])
-  schedule Schedule[]
+  departureSchedules Schedule[] @relation("source")
+  arrivalSchedules   Schedule[] @relation("destination")
 }
 
 model Coach{
@@ -99,6 +102,7 @@ model Booking{
   status String @default("Booked")
   bookingAt DateTime @default(now())
   payment Payment?
+  @@unique([seatId, scheduleId])
 }
 
 model Payment{

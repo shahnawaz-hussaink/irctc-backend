@@ -5,7 +5,7 @@ import {
     registerUser,
 } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { getTrainById, searchTrain } from "../controllers/train.controller.js";
+import { getTrainByIdOrName, searchTrain } from "../controllers/train.controller.js";
 import { getAvailableSeats } from "../controllers/seat.controller.js";
 import {
     bookSeat,
@@ -23,9 +23,9 @@ router.route("/register-user").post(registerUser);
 router.route("/login").post(loginUser);
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/search-train").get(searchTrain);
-router.route("/get-train-by-id").get(getTrainById);
+router.route("/get-train-by-id").get(getTrainByIdOrName);
 router.route("/available-seats/:scheduleId").get(getAvailableSeats);
-router.route("/book-seat").get(verifyJWT, bookSeat);
+router.route("/book-seat/:scheduleId/:coachType").post(verifyJWT, bookSeat);
 router.route("/bookings/:bookingId/get-booking").get(verifyJWT, getBooking);
 router
     .route("/bookings/:bookingId/cancel-booking")

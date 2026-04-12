@@ -51,6 +51,7 @@ const createPayment = asyncHandler(async (req, res) => {
         new ApiResponse(
             201,
             {
+                paymentId : payment.id,
                 bookingId: payment.bookingId,
                 Status: payment.status,
             },

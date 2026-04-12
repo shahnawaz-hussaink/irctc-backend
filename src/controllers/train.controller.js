@@ -30,7 +30,7 @@ const createTrain = asyncHandler(async (req, res) => {
     }
     const train = await prisma.train.create({
         data: {
-            trainName,
+            trainName : trainName.toUpperCase().trim(),
             trainNumber,
             sourceStation: sourceStation.toUpperCase().trim(),
             destinationStation: destinationStation.toUpperCase().trim(),
@@ -76,7 +76,8 @@ const searchTrain = asyncHandler(async (req, res) => {
         },
         include: {
             train: true,
-            platform: true,
+            sourcePlatform: true,
+            destinationPlatform: true,
         },
     });
 
@@ -87,15 +88,18 @@ const searchTrain = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, schedules, "sucess"));
 });
 
-const getTrainById = asyncHandler(async (req, res) => {
-    const trainId = parseInt(req.body.trainId);
+const getTrainByIdOrName = asyncHandler(async (req, res) => {
+    const trainNumber = parseInt(req.body.trainNumber) || 0;
+    const trainName = req.body.trainName;
 
-    if (!trainId) {
-        throw new ApiError(400, "All fields are Required");
+    if (!trainNumber && !trainName) {
+        throw new ApiError(400, "TrainId or TrainName fields are Required");
     }
 
     const train = await prisma.schedule.findFirst({
-        where: { trainId },
+        where: {
+            OR: [{ train: { trainNumber } }, { train: { trainName } }],
+        },
     });
 
     if (!train) {
@@ -107,4 +111,4 @@ const getTrainById = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, train, "Fetched Train Successfully"));
 });
 
-export { createTrain, searchTrain, getTrainById };
+export { createTrain, searchTrain, getTrainByIdOrName };

@@ -6,9 +6,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const createSchedule = asyncHandler(async (req, res) => {
     const { arrivalTime, departureTime, date } = req.body;
     const trainId = parseInt(req.body.trainId);
-    const platformId = parseInt(req.body.platformId);
+    const sourcePlatformId = parseInt(req.body.sourcePlatformId);
+    const destinationPlatformId = parseInt(req.body.destinationPlatformId);
 
-    if (!trainId || !platformId || !arrivalTime || !departureTime || !date) {
+    if (!trainId || !sourcePlatformId || !destinationPlatformId || !arrivalTime || !departureTime || !date) {
         throw new ApiError(400, "All fields are Required");
     }
 
@@ -26,16 +27,26 @@ const createSchedule = asyncHandler(async (req, res) => {
         throw new ApiError(404, "No Train exist with given Train ID");
     }
 
-    const isPlatfromExist = await prisma.platform.findFirst({
-        where: { id: platformId },
+    const issourcePlatformExist = await prisma.platform.findFirst({
+        where: { id: sourcePlatformId },
     });
-    if (!isPlatfromExist) {
-        throw new ApiError(404, "Platfrom Doesn't Exist");
+
+    console.log(sourcePlatformId,destinationPlatformId)
+    if (!issourcePlatformExist) {
+        throw new ApiError(404, "Source Station Platfrom Doesn't Exist");
+    }
+
+    const isDestinationPlatfromExist = await prisma.platform.findFirst({
+        where: { id: destinationPlatformId },
+    });
+    if (!isDestinationPlatfromExist) {
+        throw new ApiError(404, "Destination Station Platfrom Doesn't Exist");
     }
 
     const isScheduleExist = await prisma.schedule.findFirst({
         where: { AND: [{ trainId }, { date: new Date(date) }] },
     });
+
     if (isScheduleExist) {
         throw new ApiError(
             400,
@@ -46,10 +57,11 @@ const createSchedule = asyncHandler(async (req, res) => {
     const schedule = await prisma.schedule.create({
         data: {
             trainId,
-            platformId,
             arrivalTime: new Date(arrivalTime),
             departureTime: new Date(departureTime),
             date: new Date(date),
+            sourcePlatformId ,
+            destinationPlatformId
         },
     });
     if (!schedule) {

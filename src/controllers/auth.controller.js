@@ -43,9 +43,11 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Server failed to register User");
     }
 
+    const {password : _password ,refreshToken : _refreshToken, role : _role, ...userWithoutPass} = user 
+
     return res
         .status(201)
-        .json(new ApiResponse(201, user, "User registered successfully"));
+        .json(new ApiResponse(201, userWithoutPass, "User registered successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -159,7 +161,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
         },
     });
 
-    const { password: _, ...adminWithoutPass } = admin;
+    const { password: _password, refreshToken:_refreshToken, ...adminWithoutPass } = admin;
 
     if (!admin) {
         throw new ApiError(500, "Something went wrong while Registering Admin");

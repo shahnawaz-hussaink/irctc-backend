@@ -4,8 +4,8 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const bookSeat = asyncHandler(async (req, res) => {
-    const coachType = req.body.coachType;
-    const scheduleId = parseInt(req.body.scheduleId);
+    const coachType = req.params.coachType;
+    const scheduleId = parseInt(req.params.scheduleId);
 
     console.log(req.user.id);
     console.log(coachType, scheduleId);
@@ -93,6 +93,28 @@ const getBooking = asyncHandler(async (req, res) => {
                     arrivalTime: true,
                     departureTime: true,
                     date: true,
+                    sourcePlatform : {
+                        select : {
+                            platformNumber : true ,
+                            station : {
+                                select :{
+                                    stationName : true ,
+                                    stationCode : true 
+                                }
+                            }
+                        }
+                    },
+                    destinationPlatform : {
+                        select : {
+                            platformNumber : true ,
+                            station : {
+                                select :{
+                                    stationName : true ,
+                                    stationCode : true 
+                                }
+                            }
+                        }
+                    },
                     train: {
                         select: {
                             trainNumber: true,
