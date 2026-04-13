@@ -51,7 +51,7 @@ const createPayment = asyncHandler(async (req, res) => {
         new ApiResponse(
             201,
             {
-                paymentId : payment.id,
+                paymentId: payment.id,
                 bookingId: payment.bookingId,
                 Status: payment.status,
             },
@@ -110,6 +110,15 @@ const updatePayment = asyncHandler(async (req, res) => {
             data: { status: status === "Success" ? "Confirmed" : "Failed" },
         });
 
+        await txn.seatLock.updateMany({
+            where: {
+                bookingId: isBookingExist.id,
+            },
+            data: {
+                status: "BOOKED",
+            },
+        });
+
         return payment;
     });
 
@@ -121,7 +130,9 @@ const updatePayment = asyncHandler(async (req, res) => {
     }
     return res
         .status(200)
-        .json(new ApiResponse(200, updatedPayment, "Updated Payment Successfully"));
+        .json(
+            new ApiResponse(200, updatedPayment, "Updated Payment Successfully")
+        );
 });
 
 export { createPayment, updatePayment };
