@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import startCronJobs from "./cron/seatCleanJob.js";
 
 const app = express();
 
@@ -21,10 +22,13 @@ app.use(
 
 app.use(cookieParser());
 
+startCronJobs()
+
 // routes
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import authRoute from "./routes/user.route.js";
 import adminRoute from './routes/admin.route.js'
+
 
 
 app.use("/api/v1/user", authRoute);

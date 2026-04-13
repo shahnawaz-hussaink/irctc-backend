@@ -2,6 +2,7 @@ import prisma from "../db/prisma.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import getTenMinTime from "../utils/getTenMinutesTime.js";
 
 const bookSeat = asyncHandler(async (req, res) => {
     const coachType = req.params.coachType;
@@ -71,7 +72,7 @@ const bookSeat = asyncHandler(async (req, res) => {
                 seatId: seat.id,
                 scheduleId,
                 status: "HELD",
-                heldUntil: new Date(Date.now() + 1 * 60 * 1000),
+                heldUntil: getTenMinTime(),
                 bookingId: newBooking.id,
             },
         });

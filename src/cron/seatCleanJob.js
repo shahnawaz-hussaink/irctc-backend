@@ -1,7 +1,11 @@
 import { schedule } from "node-cron";
-import seatCleanup from "../utils/seatCleanupCron";
+import seatCleanup from "../utils/seatCleanupCron.js";
 
-schedule("*/5 * * * *", async () => {
-    await seatCleanup();
-    console.log("Expired seat locks cleared");
-});
+const startCronJobs = () => {
+    schedule("*/10 * * * * *", async () => {
+        await seatCleanup();
+        console.log("Expired seat locks cleared");
+    });
+};
+
+export default startCronJobs;

@@ -17,6 +17,7 @@ import {
     updatePayment,
 } from "../controllers/payment.controller.js";
 
+
 const router = Router();
 
 router.route("/register-user").post(registerUser);
