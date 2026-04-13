@@ -2,6 +2,7 @@ import prisma from "../db/prisma.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import seatCleanup from "../utils/seatCleanupCron.js";
 
 const getAvailableSeats = asyncHandler(async (req, res) => {
     const coachType = req.query.coachType;
@@ -20,31 +21,49 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
         throw new ApiError(404, "NO Schedule Found");
     }
 
-    const availableSeats = await prisma.seat.findMany({
+    await seatCleanup();
+    
+    const totalSeatInCoach = await prisma.seat.findMany({
         where: {
             coach: {
                 trainId: schedule.trainId,
                 coachType: coachType,
             },
-            booking: {
-                none: {
-                    scheduleId: scheduleId,
-                    status: {
-                        not: "Cancelled",
-                    },
+        },
+    });
+
+    if (!totalSeatInCoach) {
+        throw new ApiError(
+            500,
+            "Soethign went wrong while Fetching Total Seats count"
+        );
+    }
+
+    const lockedSeats = await prisma.seatLock.findMany({
+        where: {
+            scheduleId,
+            status: { in: ["HELD", "BOOKED"] },
+            seat: {
+                coach: {
+                    coachType,
                 },
             },
         },
-        include: {
-            coach: true,
-        },
     });
+
+    if (!lockedSeats) {
+        throw new ApiError(
+            500,
+            "Soethign went wrong while Fetching Locked Seats count"
+        );
+    }
+
     return res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                { availableSeat: availableSeats.length },
+                { availableSeat: totalSeatInCoach.length - lockedSeats.length },
                 "Got all  avaliable Seats"
             )
         );

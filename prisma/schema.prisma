@@ -29,6 +29,7 @@ model User{
   bookings Booking[]
   refreshToken String?
   role Role @default(USER)
+  seatLock SeatLock[]
 }
 
 model Train {
@@ -53,6 +54,7 @@ model Schedule{
   departureTime DateTime 
   date DateTime
   booking Booking[]
+  seatLock SeatLock[]
 }
 
 model Station {
@@ -89,6 +91,7 @@ model Seat{
   coachId Int 
   coach Coach @relation(fields: [coachId] , references: [id])
   booking Booking[]
+  seatLock SeatLock[]
 }
 
 model Booking{
@@ -103,6 +106,7 @@ model Booking{
   bookingAt DateTime @default(now())
   payment Payment?
   @@unique([seatId, scheduleId])
+  seatLock SeatLock[]
 }
 
 model Payment{
@@ -111,5 +115,24 @@ model Payment{
   booking Booking @relation(fields: [bookingId] , references: [id])
   status String @default("Pending")
   amount Int
+}
+
+enum SeatStatus {
+  HELD
+  BOOKED
+  CANCELLED
+}
+model SeatLock {
+  id Int @id @default(autoincrement())
+  seatId Int 
+  scheduleId Int
+  userId Int 
+  bookingId Int
+  status SeatStatus @default(HELD)
+  heldUntil DateTime
+  seat Seat @relation(fields: [seatId] , references: [id])
+  user User @relation(fields: [userId] , references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id])
+  schedule Schedule @relation(fields: [scheduleId] , references: [id])
 }
 

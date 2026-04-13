@@ -61,7 +61,18 @@ const bookSeat = asyncHandler(async (req, res) => {
                 userId: req.user?.id,
                 seatId: seat.id,
                 scheduleId,
-                status: "Booked",
+                status: "Pending",
+            },
+        });
+
+        await txn.seatLock.create({
+            data: {
+                userId: req.user?.id,
+                seatId: seat.id,
+                scheduleId,
+                status: "HELD",
+                heldUntil: new Date(Date.now() + 1 * 60 * 1000),
+                bookingId: newBooking.id,
             },
         });
 
@@ -93,27 +104,27 @@ const getBooking = asyncHandler(async (req, res) => {
                     arrivalTime: true,
                     departureTime: true,
                     date: true,
-                    sourcePlatform : {
-                        select : {
-                            platformNumber : true ,
-                            station : {
-                                select :{
-                                    stationName : true ,
-                                    stationCode : true 
-                                }
-                            }
-                        }
+                    sourcePlatform: {
+                        select: {
+                            platformNumber: true,
+                            station: {
+                                select: {
+                                    stationName: true,
+                                    stationCode: true,
+                                },
+                            },
+                        },
                     },
-                    destinationPlatform : {
-                        select : {
-                            platformNumber : true ,
-                            station : {
-                                select :{
-                                    stationName : true ,
-                                    stationCode : true 
-                                }
-                            }
-                        }
+                    destinationPlatform: {
+                        select: {
+                            platformNumber: true,
+                            station: {
+                                select: {
+                                    stationName: true,
+                                    stationCode: true,
+                                },
+                            },
+                        },
                     },
                     train: {
                         select: {
