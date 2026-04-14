@@ -91,7 +91,7 @@ const updatePayment = asyncHandler(async (req, res) => {
     if (isBookingExist.status === "CANCELLED") {
         throw new ApiError(
             400,
-            "Booking is Already Cancelled, cannot Access Payment"
+            "Booking is Cancelled, cannot Access Payment"
         );
     }
 
@@ -107,7 +107,7 @@ const updatePayment = asyncHandler(async (req, res) => {
 
         await txn.booking.update({
             where: { id: isBookingExist.id },
-            data: { status: status === "Success" ? "Confirmed" : "Failed" },
+            data: { status: status === "Success" ? "CONFIRMED" : "CANCELLED" },
         });
 
         await txn.seatLock.updateMany({

@@ -94,6 +94,12 @@ model Seat{
   seatLock SeatLock[]
 }
 
+enum bookingStatus {
+  HELD
+  BOOKED
+  CANCELLED
+}
+
 model Booking{
   id Int @id @default(autoincrement())
   userId Int 
@@ -102,11 +108,12 @@ model Booking{
   user User @relation(fields: [userId] , references: [id])
   seat Seat @relation(fields: [seatId] , references: [id])
   schedule Schedule @relation(fields: [scheduleId] , references: [id])
-  status String @default("Booked")
+  status bookingStatus @default(HELD)
   bookingAt DateTime @default(now())
-  payment Payment?
+  payment Payment[]
   @@unique([seatId, scheduleId])
   seatLock SeatLock[]
+  passengerInfo PassengerInfo[]
 }
 
 model Payment{
@@ -134,5 +141,20 @@ model SeatLock {
   user User @relation(fields: [userId] , references: [id])
   booking Booking @relation(fields: [bookingId], references: [id])
   schedule Schedule @relation(fields: [scheduleId] , references: [id])
+}
+
+enum passengerGender {
+  MALE 
+  FEMALE 
+  TRANSGENDER
+}
+
+model PassengerInfo {
+  id Int @id @unique @default(autoincrement())
+  passengerName String 
+  passengerAge Int 
+  passengerGender passengerGender
+  bookingId Int 
+  booking Booking @relation(fields: [bookingId], references: [id])
 }
 

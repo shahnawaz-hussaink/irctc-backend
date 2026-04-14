@@ -7,12 +7,14 @@ import getTenMinTime from "../utils/getTenMinutesTime.js";
 const bookSeat = asyncHandler(async (req, res) => {
     const coachType = req.params.coachType;
     const scheduleId = parseInt(req.params.scheduleId);
-
-    console.log(req.user.id);
-    console.log(coachType, scheduleId);
+    const { passengerName, passengerAge, passengerGender } = req.body;
 
     if (!coachType || !scheduleId) {
-        throw new ApiError(400, "All fields are Required");
+        throw new ApiError(400, "Wrong Route , Check Route detials");
+    }
+
+    if (!passengerName || !passengerAge || !passengerGender) {
+        throw new ApiError(400, "All fields are Requied");
     }
 
     const isScheduleExist = await prisma.schedule.findFirst({
@@ -30,14 +32,16 @@ const bookSeat = asyncHandler(async (req, res) => {
                     trainId: isScheduleExist.trainId,
                     coachType,
                 },
-                booking: {
+                seatLock: {
                     none: {
                         scheduleId,
-                        status: { not: "Cancelled" },
+                        status: { not: "CANCELLED" },
                     },
                 },
             },
         });
+
+        console.log(seat);
 
         if (!seat) {
             throw new ApiError(400, "Seat not available");
@@ -49,7 +53,7 @@ const bookSeat = asyncHandler(async (req, res) => {
             where: {
                 seatId: seat.id,
                 scheduleId,
-                status: { not: "Cancelled" },
+                status: { not: "CANCELLED" },
             },
         });
 
@@ -62,7 +66,16 @@ const bookSeat = asyncHandler(async (req, res) => {
                 userId: req.user?.id,
                 seatId: seat.id,
                 scheduleId,
-                status: "Pending",
+                status: "HELD",
+            },
+        });
+
+        await txn.passengerInfo.create({
+            data: {
+                passengerName,
+                passengerGender,
+                passengerAge,
+                bookingId: newBooking.id,
             },
         });
 
@@ -100,6 +113,13 @@ const getBooking = asyncHandler(async (req, res) => {
         where: { id: bookingId },
         select: {
             status: true,
+            passengerInfo: {
+                select: {
+                    passengerName: true,
+                    passengerAge: true,
+                    passengerGender: true,
+                },
+            },
             schedule: {
                 select: {
                     arrivalTime: true,
@@ -139,7 +159,12 @@ const getBooking = asyncHandler(async (req, res) => {
                 select: {
                     seatNumber: true,
                     seatName: true,
-                    coachId: true,
+                    coach: {
+                        select: {
+                            coachNumber: true,
+                            coachType: true,
+                        },
+                    },
                 },
             },
         },
