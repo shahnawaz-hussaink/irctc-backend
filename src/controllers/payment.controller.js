@@ -88,7 +88,7 @@ const updatePayment = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Booking does not Exists");
     }
 
-    if (isBookingExist.status === "Cancelled") {
+    if (isBookingExist.status === "CANCELLED") {
         throw new ApiError(
             400,
             "Booking is Already Cancelled, cannot Access Payment"

@@ -156,38 +156,73 @@ const getBooking = asyncHandler(async (req, res) => {
 
 const cancelBooking = asyncHandler(async (req, res) => {
     const bookingId = parseInt(req.params.bookingId);
-
     if (!bookingId) {
-        throw new ApiError(400, "Booking Id not Provided");
+        throw new ApiError(400, "Booking ID Required");
     }
 
     const isBookingExist = await prisma.booking.findUnique({
         where: { id: bookingId },
     });
-
     if (!isBookingExist) {
         throw new ApiError(404, "Booking Not Found");
     }
 
-    if (isBookingExist.status === "Cancelled") {
-        throw new ApiError(400, "Booking Already Cancelled");
+    const isValidUser = req.user?.id === isBookingExist.userId;
+    if (!isValidUser) {
+        throw new ApiError(401, "Not Authorized User");
     }
 
-    const cancelledBooking = await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-            status: "Cancelled",
-        },
+    const cancelledBooking = await prisma.$transaction(async (txn) => {
+        const booking =
+            await txn.$queryRaw`SELECT * FROM "Booking" WHERE id=${bookingId} for Update`;
+
+        if (!booking) {
+            throw new ApiError(404, "Booking Not Found");
+        }
+
+        if (booking[0].status === "CANCELLED") {
+            return booking;
+        }
+
+        const UpdateBooking = await txn.booking.update({
+            where: {
+                id: bookingId,
+            },
+            data: {
+                status: "CANCELLED",
+            },
+        });
+
+        await txn.seatLock.deleteMany({
+            where: { bookingId },
+        });
+
+        await txn.payment.updateMany({
+            where: { bookingId },
+            data: {
+                status: "REFUND_PENDING",
+            },
+        });
+
+        return UpdateBooking;
     });
 
     if (!cancelledBooking) {
         throw new ApiError(
             500,
-            "Something went wrong while Cancelling Booking"
+            "Something went wrong while Cancelling YOur booking"
         );
     }
 
-    return res.status(200).json(new ApiResponse(200, {}, "Booking Cancelled"));
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                cancelledBooking,
+                "Booking Cancelled Successfully!!!"
+            )
+        );
 });
 
 export { bookSeat, getBooking, cancelBooking };
