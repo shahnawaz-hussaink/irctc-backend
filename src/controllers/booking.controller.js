@@ -50,10 +50,16 @@ const bookSeat = asyncHandler(async (req, res) => {
             },
             take: passengers.length,
         });
+        if (seat.length <= 0) {
+            throw new ApiError(400, "NO Seat available for Booking");
+        }
+
+        if (seat.length < passengers.length) {
+            throw new ApiError(400, "Limited Seats avaliable only");
+        }
 
         const seatIds = seat.map((seats) => seats.id);
-
-        if (!seatIds) {
+        if (seatIds.length <= 0) {
             throw new ApiError(400, "Seats not available");
         }
 
@@ -61,7 +67,7 @@ const bookSeat = asyncHandler(async (req, res) => {
 
         const isAlreadyBooked = await txn.seatLock.findMany({
             where: {
-                seatId: { in: seat.id },
+                seatId: { in: seatIds },
                 scheduleId,
                 status: { not: "CANCELLED" },
             },
