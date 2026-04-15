@@ -14,6 +14,7 @@ import {
     bookSeat,
     cancelBooking,
     getBooking,
+    getBookingByPNR,
 } from "../controllers/booking.controller.js";
 import {
     createPayment,
@@ -37,5 +38,5 @@ router.route("/bookings/:bookingId/payment").post(verifyJWT, createPayment);
 router
     .route("/bookings/:paymentId/update-payment")
     .patch(verifyJWT, updatePayment);
-
+router.route("/bookings/get-booking").get(verifyJWT,getBookingByPNR)
 export default router;

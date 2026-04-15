@@ -2,7 +2,7 @@ import prisma from "../db/prisma.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import generatePNR from "../utils/pnr.js";
+import generatePNR from "../utils/generatePnr.js";
 
 const createPayment = asyncHandler(async (req, res) => {
     const bookingId = parseInt(req.params.bookingId);
@@ -66,6 +66,7 @@ const createPayment = asyncHandler(async (req, res) => {
             bookingId,
             status: "Pending",
             amount: totalAmount,
+            createdAt: new Date(Date.now()),
         },
     });
 
@@ -105,6 +106,9 @@ const updatePayment = asyncHandler(async (req, res) => {
     if (!isPaymentExist) {
         throw new ApiError(404, "No Payment Found with this paymentId");
     }
+    if (isPaymentExist.status === "SUCCESS") {
+        throw new ApiError(400, "Payment Alredy Exists");
+    }
 
     const isBookingExist = await prisma.booking.findFirst({
         where: { id: isPaymentExist.booking.id },
@@ -130,9 +134,9 @@ const updatePayment = asyncHandler(async (req, res) => {
 
         await txn.booking.update({
             where: { id: isBookingExist.id },
-            data: { status: status === "SUCCESS" ? "BOOKED" : "CANCELLED" 
-                , 
-                pnr : generatePNR()
+            data: {
+                status: status === "SUCCESS" ? "BOOKED" : "CANCELLED",
+                pnr: generatePNR(),
             },
         });
 

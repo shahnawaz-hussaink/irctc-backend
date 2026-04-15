@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import getTenMinTime from "../utils/getTenMinutesTime.js";
+import isValidPnr from "../utils/isValidPnr.js";
 
 const bookSeat = asyncHandler(async (req, res) => {
     const coachType = req.params.coachType;
@@ -124,7 +125,7 @@ const getBooking = asyncHandler(async (req, res) => {
     const bookingId = parseInt(req.params.bookingId);
 
     if (!bookingId) {
-        throw new ApiError(400, "Booking Id not provided");
+        throw new ApiError(400, "Booking Id Required");
     }
 
     const booking = await prisma.booking.findUnique({
@@ -264,4 +265,27 @@ const cancelBooking = asyncHandler(async (req, res) => {
         );
 });
 
-export { bookSeat, getBooking, cancelBooking };
+const getBookingByPNR = asyncHandler(async (req, res) => {
+    const pnr = req.body.pnr;
+    if (!pnr) {
+        throw new ApiError(400, "PNR is Required to find Booking");
+    }
+
+    if (!isValidPnr(pnr)) {
+        throw new ApiError(400, "PNR Must be 10 Digits");
+    }
+
+    const booking = await prisma.booking.findFirst({
+        where: { pnr },
+    });
+
+    if (!booking) {
+        throw new ApiError(400, "Invalid PNR , Check PNR");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, booking, "Fetched Booking Successfully"));
+});
+
+export { bookSeat, getBooking, cancelBooking, getBookingByPNR };
