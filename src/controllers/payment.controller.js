@@ -11,18 +11,43 @@ const createPayment = asyncHandler(async (req, res) => {
 
     const isBookingExist = await prisma.booking.findUnique({
         where: { id: bookingId },
-        include: {
-            seat: {
-                include: { coach: true },
+        select: {
+            userId: true,
+            seatLock: {
+                select: {
+                    seat: {
+                        select: {
+                            coach: {
+                                select: {
+                                    price: true,
+                                    coachType: true,
+                                },
+                            },
+                        },
+                    },
+                },
             },
         },
     });
+
     if (!isBookingExist) {
         throw new ApiError(404, "Booking Not Found");
     }
 
     if (isBookingExist.userId !== req.user.id) {
         throw new ApiError(401, "Not Authorized");
+    }
+
+    const bookedSeatCount = isBookingExist.seatLock.length;
+    const eachSeatPrice = isBookingExist.seatLock[0].seat.coach.price;
+
+    const totalAmount = bookedSeatCount * eachSeatPrice;
+
+    if (totalAmount < 0) {
+        throw new ApiError(
+            500,
+            "Somethign went wrong , while calculatin price , try Again later"
+        );
     }
 
     const isPaymentExist = await prisma.payment.findUnique({
@@ -39,7 +64,7 @@ const createPayment = asyncHandler(async (req, res) => {
         data: {
             bookingId,
             status: "Pending",
-            amount: isBookingExist.seat.coach.price,
+            amount: totalAmount,
         },
     });
 
@@ -89,10 +114,7 @@ const updatePayment = asyncHandler(async (req, res) => {
     }
 
     if (isBookingExist.status === "CANCELLED") {
-        throw new ApiError(
-            400,
-            "Booking is Cancelled, cannot Access Payment"
-        );
+        throw new ApiError(400, "Booking is Cancelled, cannot Access Payment");
     }
 
     if (isPaymentExist.booking.userId !== req.user.id) {
@@ -107,7 +129,7 @@ const updatePayment = asyncHandler(async (req, res) => {
 
         await txn.booking.update({
             where: { id: isBookingExist.id },
-            data: { status: status === "Success" ? "CONFIRMED" : "CANCELLED" },
+            data: { status: status === "SUCCESS" ? "BOOKED" : "CANCELLED" },
         });
 
         await txn.seatLock.updateMany({

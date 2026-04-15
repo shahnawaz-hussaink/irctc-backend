@@ -90,7 +90,6 @@ model Seat{
   seatName String
   coachId Int 
   coach Coach @relation(fields: [coachId] , references: [id])
-  booking Booking[]
   seatLock SeatLock[]
 }
 
@@ -103,15 +102,12 @@ enum bookingStatus {
 model Booking{
   id Int @id @default(autoincrement())
   userId Int 
-  seatId Int
   scheduleId Int
   user User @relation(fields: [userId] , references: [id])
-  seat Seat @relation(fields: [seatId] , references: [id])
   schedule Schedule @relation(fields: [scheduleId] , references: [id])
   status bookingStatus @default(HELD)
   bookingAt DateTime @default(now())
   payment Payment[]
-  @@unique([seatId, scheduleId])
   seatLock SeatLock[]
   passengerInfo PassengerInfo[]
 }

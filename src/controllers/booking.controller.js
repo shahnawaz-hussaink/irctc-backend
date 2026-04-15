@@ -7,14 +7,23 @@ import getTenMinTime from "../utils/getTenMinutesTime.js";
 const bookSeat = asyncHandler(async (req, res) => {
     const coachType = req.params.coachType;
     const scheduleId = parseInt(req.params.scheduleId);
-    const { passengerName, passengerAge, passengerGender } = req.body;
+    const { passenger1, passenger2, passenger3, passenger4, passenger5 } =
+        req.body;
+
+    const passengers = [
+        passenger1,
+        passenger2,
+        passenger3,
+        passenger4,
+        passenger5,
+    ].filter(Boolean);
 
     if (!coachType || !scheduleId) {
         throw new ApiError(400, "Wrong Route , Check Route detials");
     }
 
-    if (!passengerName || !passengerAge || !passengerGender) {
-        throw new ApiError(400, "All fields are Requied");
+    if (!passengers) {
+        throw new ApiError(400, "No Passenger Provided");
     }
 
     const isScheduleExist = await prisma.schedule.findFirst({
@@ -26,7 +35,7 @@ const bookSeat = asyncHandler(async (req, res) => {
     }
 
     const booking = await prisma.$transaction(async (txn) => {
-        const seat = await txn.seat.findFirst({
+        const seat = await txn.seat.findMany({
             where: {
                 coach: {
                     trainId: isScheduleExist.trainId,
@@ -39,55 +48,57 @@ const bookSeat = asyncHandler(async (req, res) => {
                     },
                 },
             },
+            take: passengers.length,
         });
 
-        console.log(seat);
+        const seatIds = seat.map((seats) => seats.id);
 
-        if (!seat) {
-            throw new ApiError(400, "Seat not available");
+        if (!seatIds) {
+            throw new ApiError(400, "Seats not available");
         }
 
-        await txn.$queryRaw`SELECT * FROM "Seat" WHERE id=${seat.id} FOR UPDATE`;
+        await txn.$queryRaw`SELECT * FROM "Seat" WHERE  id= ANY(${seatIds}::int[]) FOR UPDATE`;
 
-        const isAlreadyBooked = await txn.booking.findFirst({
+        const isAlreadyBooked = await txn.seatLock.findMany({
             where: {
-                seatId: seat.id,
+                seatId: { in: seat.id },
                 scheduleId,
                 status: { not: "CANCELLED" },
             },
         });
 
-        if (isAlreadyBooked) {
+        if (isAlreadyBooked.length > 0) {
             throw new ApiError(400, "Seat just Booked BY another USER");
         }
 
         const newBooking = await txn.booking.create({
             data: {
                 userId: req.user?.id,
-                seatId: seat.id,
                 scheduleId,
                 status: "HELD",
             },
         });
 
-        await txn.passengerInfo.create({
-            data: {
-                passengerName,
-                passengerGender,
-                passengerAge,
-                bookingId: newBooking.id,
-            },
+        const passengerData = passengers.map((passenger) => ({
+            ...passenger,
+            bookingId: newBooking.id,
+        }));
+
+        await txn.passengerInfo.createMany({
+            data: passengerData,
         });
 
-        await txn.seatLock.create({
-            data: {
-                userId: req.user?.id,
-                seatId: seat.id,
-                scheduleId,
-                status: "HELD",
-                heldUntil: getTenMinTime(),
-                bookingId: newBooking.id,
-            },
+        const seatLockData = seatIds.map((seatId) => ({
+            userId: req.user?.id,
+            seatId,
+            scheduleId,
+            status: "HELD",
+            heldUntil: getTenMinTime(),
+            bookingId: newBooking.id,
+        }));
+
+        await txn.seatLock.createMany({
+            data: seatLockData,
         });
 
         if (!newBooking) {
@@ -155,14 +166,12 @@ const getBooking = asyncHandler(async (req, res) => {
                     },
                 },
             },
-            seat: {
+            seatLock: {
                 select: {
-                    seatNumber: true,
-                    seatName: true,
-                    coach: {
+                    seat: {
                         select: {
-                            coachNumber: true,
-                            coachType: true,
+                            seatNumber: true,
+                            seatName: true,
                         },
                     },
                 },
@@ -217,11 +226,9 @@ const cancelBooking = asyncHandler(async (req, res) => {
                 status: "CANCELLED",
             },
         });
-
         await txn.seatLock.deleteMany({
             where: { bookingId },
         });
-
         await txn.payment.updateMany({
             where: { bookingId },
             data: {

@@ -5,7 +5,10 @@ import {
     registerUser,
 } from "../controllers/auth.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { getTrainByIdOrName, searchTrain } from "../controllers/train.controller.js";
+import {
+    getTrainByIdOrName,
+    searchTrain,
+} from "../controllers/train.controller.js";
 import { getAvailableSeats } from "../controllers/seat.controller.js";
 import {
     bookSeat,
@@ -16,7 +19,6 @@ import {
     createPayment,
     updatePayment,
 } from "../controllers/payment.controller.js";
-
 
 const router = Router();
 

@@ -22,7 +22,7 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
     }
 
     await seatCleanup();
-    
+
     const totalSeatInCoach = await prisma.seat.findMany({
         where: {
             coach: {
