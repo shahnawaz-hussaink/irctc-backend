@@ -110,7 +110,7 @@ model Booking{
   payment Payment[]
   seatLock SeatLock[]
   passengerInfo PassengerInfo[]
-  pnr BigInt? @unique
+  pnr String? @unique
   createdAt DateTime
 }
 
