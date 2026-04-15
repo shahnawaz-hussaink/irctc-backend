@@ -110,7 +110,10 @@ model Booking{
   payment Payment[]
   seatLock SeatLock[]
   passengerInfo PassengerInfo[]
+  pnr BigInt? @unique
+  createdAt DateTime
 }
+
 
 model Payment{
   id Int @id @default(autoincrement())
@@ -118,6 +121,7 @@ model Payment{
   booking Booking @relation(fields: [bookingId] , references: [id])
   status String @default("Pending")
   amount Int
+  createdAt DateTime
 }
 
 enum SeatStatus {

@@ -82,6 +82,7 @@ const bookSeat = asyncHandler(async (req, res) => {
                 userId: req.user?.id,
                 scheduleId,
                 status: "HELD",
+                createdAt: new Date(Date.now()),
             },
         });
 

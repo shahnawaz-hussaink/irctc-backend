@@ -1,13 +1,27 @@
 import prisma from "../db/prisma.js";
 
 const seatCleanup = async () => {
-    const deleted = await prisma.seatLock.deleteMany({
+    const deletedSeat = await prisma.seatLock.deleteMany({
         where: {
             status: "HELD",
             heldUntil: { lt: new Date() },
         },
     });
-    console.log(`Cleaned up ${deleted.count} expired seat locks`);
+    const passengerClean = await prisma.passengerInfo.deleteMany({
+        where: {
+            booking: {
+                status: "HELD",
+                createdAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
+            },
+        },
+    });
+    const bookingClean = await prisma.booking.deleteMany({
+        where: {
+            status: "HELD",
+            createdAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
+        },
+    });
+    console.log(deletedSeat, passengerClean, bookingClean);
 };
 
 export default seatCleanup;

@@ -2,6 +2,7 @@ import prisma from "../db/prisma.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import generatePNR from "../utils/pnr.js";
 
 const createPayment = asyncHandler(async (req, res) => {
     const bookingId = parseInt(req.params.bookingId);
@@ -129,7 +130,10 @@ const updatePayment = asyncHandler(async (req, res) => {
 
         await txn.booking.update({
             where: { id: isBookingExist.id },
-            data: { status: status === "SUCCESS" ? "BOOKED" : "CANCELLED" },
+            data: { status: status === "SUCCESS" ? "BOOKED" : "CANCELLED" 
+                , 
+                pnr : generatePNR()
+            },
         });
 
         await txn.seatLock.updateMany({
