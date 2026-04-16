@@ -97,6 +97,7 @@ enum bookingStatus {
   HELD
   BOOKED
   CANCELLED
+  WAITING
 }
 
 model Booking{
@@ -112,6 +113,9 @@ model Booking{
   passengerInfo PassengerInfo[]
   pnr String? @unique
   createdAt DateTime
+  waitingNumber Int?
+  @@index([scheduleId, status])
+  @@index([scheduleId, waitingNumber])
 }
 
 
@@ -141,6 +145,7 @@ model SeatLock {
   user User @relation(fields: [userId] , references: [id])
   booking Booking @relation(fields: [bookingId], references: [id])
   schedule Schedule @relation(fields: [scheduleId] , references: [id])
+  @@unique([seatId, scheduleId])
 }
 
 enum passengerGender {

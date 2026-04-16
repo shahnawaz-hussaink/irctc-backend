@@ -23,7 +23,7 @@ const bookSeat = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Wrong Route , Check Route detials");
     }
 
-    if (!passengers) {
+    if (passengers.length === 0) {
         throw new ApiError(400, "No Passenger Provided");
     }
 
