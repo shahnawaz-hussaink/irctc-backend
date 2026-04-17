@@ -1,4 +1,4 @@
-import { Seat_Count_Sleeper_OR_3AC } from "../constants.js";
+import { Seat_Count_Sleeper_OR_3AC , AC_1_Coach_Seat_Count } from "../constants.js";
 import prisma from "../db/prisma.js";
 import { ApiError } from "./apiError.js";
 
@@ -19,7 +19,7 @@ const generateSeats = async (coachNumber, coachName, coachId , tx) => {
     ];
 
     const Sleeper_OR_3AC_SEAT_FILLING = Array.from(
-        { length: Seat_Count_Sleeper_OR_3AC },
+        { length: AC_1_Coach_Seat_Count },
         (_, index) => {
             const position = index % 8;
             return {
@@ -33,7 +33,7 @@ const generateSeats = async (coachNumber, coachName, coachId , tx) => {
     coachName = coachName.toUpperCase().trim();
 
     switch (coachName) {
-        case "3AC" || "SLEEPER":
+        case "1AC" || "SLEEPER":
             const seats = await tx.seat.createMany({
                 data: Sleeper_OR_3AC_SEAT_FILLING,
             });

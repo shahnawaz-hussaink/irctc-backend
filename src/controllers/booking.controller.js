@@ -1,4 +1,5 @@
 import prisma from "../db/prisma.js";
+import { waitingTicketBooking } from "../services/waitingTicketBooking.service.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -51,8 +52,24 @@ const bookSeat = asyncHandler(async (req, res) => {
             },
             take: passengers.length,
         });
-        if (seat.length <= 0) {
-            throw new ApiError(400, "NO Seat available for Booking");
+
+        const isWaitingBookingExist = await txn.booking.findFirst({
+            where: { scheduleId, status: "WAITING" },
+            orderBy: { waitingNumber: "desc" },
+        });
+
+        console.log("I ran");
+        console.log(isWaitingBookingExist);
+
+        if (seat.length <= 0 || isWaitingBookingExist) {
+            const waitingBooking = await waitingTicketBooking(
+                txn,
+                req.user.id,
+                scheduleId,
+                passengers,
+                coachType
+            );
+            return {type : "WAITING" , data : waitingBooking}
         }
 
         if (seat.length < passengers.length) {
@@ -84,6 +101,7 @@ const bookSeat = asyncHandler(async (req, res) => {
                 scheduleId,
                 status: "HELD",
                 createdAt: new Date(Date.now()),
+                coachType,
             },
         });
 
