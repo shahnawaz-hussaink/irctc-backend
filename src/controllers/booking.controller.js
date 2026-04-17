@@ -56,9 +56,8 @@ const bookSeat = asyncHandler(async (req, res) => {
 
         const isWaitingBookingExist = await txn.booking.findFirst({
             where: { scheduleId, status: "WAITING" },
-            orderBy: { waitingNumber: "desc" },
+            orderBy: { createdAt: "desc" },
         });
-
 
         if (seat.length <= 0 || isWaitingBookingExist) {
             const waitingBooking = await waitingTicketBooking(
@@ -274,7 +273,8 @@ const cancelBooking = asyncHandler(async (req, res) => {
     await myWaitingListQueue.add("waitingListQueue", {
         type: "CANCELLATION",
         data: {
-            bookingId,
+            scheduleid: isBookingExist.scheduleId,
+            coachType: isBookingExist.coachType,
         },
     });
 

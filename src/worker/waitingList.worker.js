@@ -1,7 +1,6 @@
 import redisConnection from "../config/redis.config.js";
 import { Worker } from "bullmq";
 import prisma from "../db/prisma.js";
-import { ApiError } from "../utils/apiError.js";
 import getTenMinTime from "../utils/getTenMinutesTime.js";
 
 const waitingListWorker = new Worker(
@@ -13,58 +12,60 @@ const waitingListWorker = new Worker(
             const { scheduleId, coachType } = data;
 
             await prisma.$transaction(async (txn) => {
-                const nextWaiting = await txn.booking.findFirst({
-                    where: { scheduleId, coachType, status: "WAITING" },
-                    orderBy: { waitingNumber: "asc" },
-                });
-
-                if (!nextWaiting) {
-                    return;
-                }
-
                 const schedule = await txn.schedule.findFirst({
                     where: { id: scheduleId },
                 });
+                while (true) {
+                    const nextWaiting = await txn.booking.findFirst({
+                        where: { scheduleId, coachType, status: "WAITING" },
+                        orderBy: { createdAt: "asc" },
+                    });
 
-                const seat = await txn.seat.findFirst({
-                    where: {
-                        coach: {
-                            trainId: schedule.trainId,
-                            coachType,
+                    if (!nextWaiting) break;
+
+                    const seat = await txn.seat.findFirst({
+                        where: {
+                            coach: {
+                                trainId: schedule.trainId,
+                                coachType,
+                            },
+                            seatLock: {
+                                none: {
+                                    scheduleId,
+                                    status: { in: ["HELD", "BOOKED"] },
+                                },
+                            },
                         },
-                        seatLock: {
-                            none: { scheduleId, status: { not: "CANCELLED" } },
+                        take: 1,
+                    });
+
+                    if (!seat) {
+                        break;
+                    }
+
+                    const updatedBooking = await txn.booking.updateMany({
+                        where: { id: nextWaiting.id },
+                        data: { status: "BOOKED" },
+                    });
+
+                    if (updatedBooking.count === 0) {
+                        continue;
+                    }
+
+                    await txn.seatLock.create({
+                        data: {
+                            userId: nextWaiting.userId,
+                            seatId: seat.id,
+                            scheduleId: schedule.id,
+                            status: "BOOKED",
+                            heldUntil: getTenMinTime(),
+                            bookingId: nextWaiting.id,
                         },
-                    },
-                    take: 1,
-                });
-
-                if (!seat) {
-                    return;
+                    });
                 }
-
-                const booking = await txn.booking.update({
-                    where: { id: nextWaiting.id },
-                    data: { status: "BOOKED", waitingNumber: null },
-                });
-
-                if (!booking) {
-                    return;
-                }
-
-                await txn.seatLock.create({
-                    data: {
-                        userId: booking.userId,
-                        seatId: seat.id,
-                        scheduleId: schedule.id,
-                        status: "BOOKED",
-                        heldUntil: getTenMinTime(),
-                        bookingId: booking.id,
-                    },
-                });
             });
 
-            console.log("I ran in waitinlistworker ");
+            console.log("Waiting List workedd ");
         }
     },
     { connection: redisConnection, concurrency: 1 }

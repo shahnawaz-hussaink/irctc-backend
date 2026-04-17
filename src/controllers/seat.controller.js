@@ -42,7 +42,7 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
     const lockedSeats = await prisma.seatLock.findMany({
         where: {
             scheduleId,
-            status: { in: ["HELD", "BOOKED"] },
+            status: { not : "CANCELLED" },
             seat: {
                 coach: {
                     coachType,
@@ -50,6 +50,8 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
             },
         },
     });
+
+    console.log(lockedSeats)
 
     if (!lockedSeats) {
         throw new ApiError(
