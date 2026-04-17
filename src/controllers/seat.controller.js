@@ -51,8 +51,6 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
         },
     });
 
-    console.log(lockedSeats)
-
     if (!lockedSeats) {
         throw new ApiError(
             500,

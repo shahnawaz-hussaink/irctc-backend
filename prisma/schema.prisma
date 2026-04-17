@@ -95,9 +95,11 @@ model Seat{
 
 enum bookingStatus {
   HELD
-  BOOKED
   CANCELLED
+  WAITING_HELD
   WAITING
+  CONFIRMED
+  PARTIAL_CONFIRMED
 }
 
 model Booking{

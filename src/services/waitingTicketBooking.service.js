@@ -13,7 +13,7 @@ const waitingTicketBooking = async (
             userId,
             scheduleId,
             coachType,
-            status: "WAITING",
+            status: "WAITING_HELD",
             createdAt: new Date(),
         },
     });

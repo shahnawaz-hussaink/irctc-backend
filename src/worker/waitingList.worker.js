@@ -45,7 +45,7 @@ const waitingListWorker = new Worker(
 
                     const updatedBooking = await txn.booking.updateMany({
                         where: { id: nextWaiting.id },
-                        data: { status: "BOOKED" },
+                        data: { status: "CONFIRMED" },
                     });
 
                     if (updatedBooking.count === 0) {

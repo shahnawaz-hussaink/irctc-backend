@@ -10,17 +10,18 @@ const seatCleanup = async () => {
     const passengerClean = await prisma.passengerInfo.deleteMany({
         where: {
             booking: {
-                status: "HELD",
+                status: { in: ["HELD", "WAITING_HELD"] },
                 createdAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
             },
         },
     });
     const bookingClean = await prisma.booking.deleteMany({
         where: {
-            status: "HELD",
+            status: { in: ["HELD", "WAITING_HELD"] },
             createdAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
         },
     });
+    
     console.log(deletedSeat, passengerClean, bookingClean);
 };
 

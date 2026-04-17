@@ -14,14 +14,14 @@ const createPayment = asyncHandler(async (req, res) => {
         where: { id: bookingId },
         select: {
             userId: true,
-            seatLock: {
+            passengerInfo : true ,
+            schedule: {
                 select: {
-                    seat: {
+                    train: {
                         select: {
-                            coach: {
+                            coaches: {
                                 select: {
                                     price: true,
-                                    coachType: true,
                                 },
                             },
                         },
@@ -29,6 +29,7 @@ const createPayment = asyncHandler(async (req, res) => {
                 },
             },
         },
+        
     });
 
     if (!isBookingExist) {
@@ -39,8 +40,10 @@ const createPayment = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Not Authorized");
     }
 
-    const bookedSeatCount = isBookingExist.seatLock.length;
-    const eachSeatPrice = isBookingExist.seatLock[0].seat.coach.price;
+    console.log(isBookingExist);
+
+    const bookedSeatCount = isBookingExist.passengerInfo.length;
+    const eachSeatPrice = isBookingExist.schedule.train.coaches[0].price;
 
     const totalAmount = bookedSeatCount * eachSeatPrice;
 
@@ -132,23 +135,33 @@ const updatePayment = asyncHandler(async (req, res) => {
             data: { status },
         });
 
-        await txn.booking.update({
-            where: { id: isBookingExist.id },
-            data: {
-                status: status === "SUCCESS" ? "BOOKED" : "CANCELLED",
-                pnr: generatePNR(),
-            },
-        });
+        if (isBookingExist.status === "HELD") {
+            await txn.booking.update({
+                where: { id: isBookingExist.id },
+                data: {
+                    status: status === "SUCCESS" ? "CONFIRMED" : "HELD",
+                    pnr: generatePNR(),
+                },
+            });
 
-        await txn.seatLock.updateMany({
-            where: {
-                bookingId: isBookingExist.id,
-            },
-            data: {
-                status: "BOOKED",
-            },
-        });
-
+            await txn.seatLock.updateMany({
+                where: {
+                    bookingId: isBookingExist.id,
+                },
+                data: {
+                    status: "BOOKED",
+                },
+            });
+        }
+        if (isBookingExist.status === "WAITING_HELD") {
+            await txn.booking.update({
+                where: { id: isBookingExist.id },
+                data: {
+                    status: status === "SUCCESS" ? "WAITING" : "WAITING_HELD",
+                    pnr: generatePNR(),
+                },
+            });
+        }
         return payment;
     });
 
