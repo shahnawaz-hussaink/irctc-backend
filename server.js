@@ -1,5 +1,6 @@
 import "./src/config/env.config.js";
 import { app } from "./src/app.js";
+import "./src/worker/waitingList.worker.js";
 
 const port = process.env.PORT || 8000;
 

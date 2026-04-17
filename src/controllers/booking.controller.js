@@ -1,4 +1,5 @@
 import prisma from "../db/prisma.js";
+import myWaitingListQueue from "../queues/waitingList.queue.js";
 import { waitingTicketBooking } from "../services/waitingTicketBooking.service.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
@@ -58,8 +59,6 @@ const bookSeat = asyncHandler(async (req, res) => {
             orderBy: { waitingNumber: "desc" },
         });
 
-        console.log("I ran");
-        console.log(isWaitingBookingExist);
 
         if (seat.length <= 0 || isWaitingBookingExist) {
             const waitingBooking = await waitingTicketBooking(
@@ -69,7 +68,7 @@ const bookSeat = asyncHandler(async (req, res) => {
                 passengers,
                 coachType
             );
-            return {type : "WAITING" , data : waitingBooking}
+            return { type: "WAITING", data: waitingBooking };
         }
 
         if (seat.length < passengers.length) {
@@ -271,6 +270,13 @@ const cancelBooking = asyncHandler(async (req, res) => {
             "Something went wrong while Cancelling YOur booking"
         );
     }
+
+    await myWaitingListQueue.add("waitingListQueue", {
+        type: "CANCELLATION",
+        data: {
+            bookingId,
+        },
+    });
 
     return res
         .status(200)
