@@ -113,10 +113,8 @@ model Booking{
   passengerInfo PassengerInfo[]
   pnr String? @unique
   createdAt DateTime
-  waitingNumber Int?
   coachType String
   @@index([scheduleId, status])
-  @@index([scheduleId, waitingNumber])
 }
 
 
