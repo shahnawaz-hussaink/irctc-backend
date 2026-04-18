@@ -13,6 +13,7 @@ import { getAvailableSeats } from "../controllers/seat.controller.js";
 import {
     bookSeat,
     cancelBooking,
+    cancelPartialBooking,
     getBooking,
     getBookingByPNR,
 } from "../controllers/booking.controller.js";
@@ -38,5 +39,8 @@ router.route("/bookings/:bookingId/payment").post(verifyJWT, createPayment);
 router
     .route("/bookings/:paymentId/update-payment")
     .patch(verifyJWT, updatePayment);
-router.route("/bookings/get-booking").get(verifyJWT,getBookingByPNR)
+router.route("/bookings/get-booking").get(verifyJWT, getBookingByPNR);
+router
+    .route("/bookings/:bookingId/partial-cancel")
+    .patch(verifyJWT, cancelPartialBooking);
 export default router;

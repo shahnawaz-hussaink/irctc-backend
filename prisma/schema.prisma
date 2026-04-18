@@ -147,6 +147,8 @@ model SeatLock {
   booking Booking @relation(fields: [bookingId], references: [id])
   schedule Schedule @relation(fields: [scheduleId] , references: [id])
   @@unique([seatId, scheduleId])
+  passengerInfo PassengerInfo?
+
 }
 
 enum passengerGender {
@@ -155,12 +157,21 @@ enum passengerGender {
   TRANSGENDER
 }
 
+enum passengerStatus {
+  CONFIRMED
+  CANCELLED
+  WAITING
+}
+
 model PassengerInfo {
   id Int @id @unique @default(autoincrement())
   passengerName String 
   passengerAge Int 
   passengerGender passengerGender
   bookingId Int 
+  passengerStatus passengerStatus @default(CONFIRMED)
+  seatLockId Int @unique
   booking Booking @relation(fields: [bookingId], references: [id])
+  seatLock SeatLock @relation(fields: [seatLockId],references: [id])
 }
 

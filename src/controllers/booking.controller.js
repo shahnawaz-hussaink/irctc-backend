@@ -103,15 +103,6 @@ const bookSeat = asyncHandler(async (req, res) => {
             },
         });
 
-        const passengerData = passengers.map((passenger) => ({
-            ...passenger,
-            bookingId: newBooking.id,
-        }));
-
-        await txn.passengerInfo.createMany({
-            data: passengerData,
-        });
-
         const seatLockData = seatIds.map((seatId) => ({
             userId: req.user?.id,
             seatId,
@@ -121,8 +112,18 @@ const bookSeat = asyncHandler(async (req, res) => {
             bookingId: newBooking.id,
         }));
 
-        await txn.seatLock.createMany({
+        const createdSeatLocks = await txn.seatLock.createManyAndReturn({
             data: seatLockData,
+        });
+
+        const passengerData = passengers.map((passenger, idx) => ({
+            ...passenger,
+            bookingId: newBooking.id,
+            seatLockId: createdSeatLocks[idx].id,
+        }));
+
+        await txn.passengerInfo.createMany({
+            data: passengerData,
         });
 
         if (!newBooking) {
@@ -312,4 +313,111 @@ const getBookingByPNR = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, booking, "Fetched Booking Successfully"));
 });
 
-export { bookSeat, getBooking, cancelBooking, getBookingByPNR };
+const cancelPartialBooking = asyncHandler(async (req, res) => {
+    const bookingId = parseInt(req.params.bookingId);
+
+    let { passengerIds } = req.body;
+
+    if (!bookingId || !passengerIds) {
+        throw new ApiError(400, "Booking ID OR PassengerIds are Required");
+    }
+
+    passengerIds = passengerIds.filter(Boolean);
+
+    const isBookingExist = await prisma.booking.findUnique({
+        where: { id: bookingId },
+    });
+    if (!isBookingExist) {
+        throw new ApiError(404, "Booking Not Found");
+    }
+
+    const isValidUser = req.user?.id === isBookingExist.userId;
+    if (!isValidUser) {
+        throw new ApiError(401, "Not Authorized User");
+    }
+
+    if (isBookingExist.status === "CANCELLED") {
+        throw new ApiError(400, "Booking Already Cancelled");
+    }
+
+    const cancelBookingPatially = await prisma.$transaction(async (txn) => {
+        const isValidPassengersIds = await txn.passengerInfo.findMany({
+            where: { bookingId: isBookingExist.id, id: { in: passengerIds } },
+        });
+
+        if (isValidPassengersIds.length !== passengerIds.length) {
+            throw new ApiError(400, "Invalid Passengers Ids");
+        }
+
+        const isAlreadyCancelled = await txn.passengerInfo.findMany({
+            where: {
+                bookingId: isBookingExist.id,
+                passengerStatus: "CANCELLED",
+                id: { in: passengerIds },
+            },
+        });
+
+        if (isAlreadyCancelled.length > 0) {
+            throw new ApiError(400, "Some passengers already cancelled");
+        }
+
+        // const seatLockIds = isValidPassengersIds.map((p) => p.seatLockId);
+
+        const updatedSeatLock = await txn.seatLock.updateMany({
+            where: {
+                bookingId: isBookingExist.id,
+                status: { in: ["BOOKED", "HELD"] },
+                passengerInfo: {
+                    id: { in: passengerIds },
+                },
+            },
+            data: {
+                status: "CANCELLED",
+            },
+        });
+
+        await txn.passengerInfo.updateMany({
+            where: {
+                bookingId: isBookingExist.id,
+                id: { in: passengerIds },
+            },
+            data: {
+                passengerStatus: "CANCELLED",
+            },
+        });
+
+        const remainingPassengers = await txn.passengerInfo.count({
+            where: {
+                bookingId: isBookingExist.id,
+                passengerStatus: { not: "CANCELLED" },
+            },
+        });
+
+        const updatedBooking = await txn.booking.update({
+            where: { id: isBookingExist.id },
+            data: {
+                status:
+                    remainingPassengers > 0 ? "PARTIAL_CONFIRMED" : "CANCELLED",
+            },
+        });
+
+        return updatedBooking;
+    });
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                cancelBookingPatially,
+                "Booking Cancelled Patially"
+            )
+        );
+});
+
+export {
+    bookSeat,
+    getBooking,
+    cancelBooking,
+    getBookingByPNR,
+    cancelPartialBooking,
+};

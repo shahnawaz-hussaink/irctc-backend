@@ -1,28 +1,42 @@
 import prisma from "../db/prisma.js";
 
 const seatCleanup = async () => {
-    const deletedSeat = await prisma.seatLock.deleteMany({
+    const expiredSeatLocks = await prisma.seatLock.findMany({
         where: {
             status: "HELD",
             heldUntil: { lt: new Date() },
         },
+        select: { id: true },
     });
-    const passengerClean = await prisma.passengerInfo.deleteMany({
-        where: {
-            booking: {
-                status: { in: ["HELD", "WAITING_HELD"] },
-                createdAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
-            },
-        },
-    });
-    const bookingClean = await prisma.booking.deleteMany({
-        where: {
-            status: { in: ["HELD", "WAITING_HELD"] },
-            createdAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
-        },
-    });
-    
-    console.log(deletedSeat, passengerClean, bookingClean);
+
+    const expiredSeatLocksIds = expiredSeatLocks.map((s) => s.id);
+
+    if (expiredSeatLocksIds.length === 0) {
+        console.log("No expired SeatLock to remove");
+        return;
+    }
+
+    const [passengerClean, deletedSeat, bookingClean] =
+        await prisma.$transaction([
+            prisma.passengerInfo.deleteMany({
+                where: {
+                    seatLockId: { in: expiredSeatLocksIds },
+                },
+            }),
+            prisma.seatLock.deleteMany({
+                where: {
+                    id: { in: expiredSeatLocksIds },
+                },
+            }),
+            prisma.booking.deleteMany({
+                where: {
+                    status: { in: ["HELD", "WAITING_HELD"] },
+                    createdAt: { lt: new Date(Date.now() - 10 * 60 * 1000) },
+                },
+            }),
+        ]);
+
+    console.log({ passengerClean, deletedSeat, bookingClean });
 };
 
 export default seatCleanup;
