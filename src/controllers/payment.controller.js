@@ -40,8 +40,6 @@ const createPayment = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Not Authorized");
     }
 
-    console.log(isBookingExist);
-
     const bookedSeatCount = isBookingExist.passengerInfo.length;
     const eachSeatPrice = isBookingExist.schedule.train.coaches[0].price;
 

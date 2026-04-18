@@ -3,7 +3,7 @@ import prisma from "../db/prisma.js";
 const seatCleanup = async () => {
     const expiredSeatLocks = await prisma.seatLock.findMany({
         where: {
-            status: "HELD",
+            status: { in: ["HELD", "CANCELLED"] },
             heldUntil: { lt: new Date() },
         },
         select: { id: true },

@@ -30,8 +30,6 @@ const createSchedule = asyncHandler(async (req, res) => {
     const issourcePlatformExist = await prisma.platform.findFirst({
         where: { id: sourcePlatformId },
     });
-
-    console.log(sourcePlatformId,destinationPlatformId)
     if (!issourcePlatformExist) {
         throw new ApiError(404, "Source Station Platfrom Doesn't Exist");
     }

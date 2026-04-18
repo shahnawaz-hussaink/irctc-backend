@@ -120,6 +120,7 @@ const bookSeat = asyncHandler(async (req, res) => {
             ...passenger,
             bookingId: newBooking.id,
             seatLockId: createdSeatLocks[idx].id,
+            createdAt : new Date(Date.now())
         }));
 
         await txn.passengerInfo.createMany({
@@ -363,17 +364,14 @@ const cancelPartialBooking = asyncHandler(async (req, res) => {
 
         // const seatLockIds = isValidPassengersIds.map((p) => p.seatLockId);
 
-        const updatedSeatLock = await txn.seatLock.updateMany({
+        const updatedSeatLock = await txn.seatLock.deleteMany({
             where: {
                 bookingId: isBookingExist.id,
                 status: { in: ["BOOKED", "HELD"] },
                 passengerInfo: {
                     id: { in: passengerIds },
                 },
-            },
-            data: {
-                status: "CANCELLED",
-            },
+            }
         });
 
         await txn.passengerInfo.updateMany({
@@ -403,6 +401,15 @@ const cancelPartialBooking = asyncHandler(async (req, res) => {
 
         return updatedBooking;
     });
+
+    await myWaitingListQueue.add("waitingListQueue", {
+        type: "CANCELLATION",
+        data: {
+            scheduleid: isBookingExist.scheduleId,
+            coachType: isBookingExist.coachType,
+        },
+    });
+
     return res
         .status(200)
         .json(

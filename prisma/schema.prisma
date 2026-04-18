@@ -170,8 +170,9 @@ model PassengerInfo {
   passengerGender passengerGender
   bookingId Int 
   passengerStatus passengerStatus @default(CONFIRMED)
-  seatLockId Int @unique
+  seatLockId Int? @unique 
   booking Booking @relation(fields: [bookingId], references: [id])
-  seatLock SeatLock @relation(fields: [seatLockId],references: [id])
+  seatLock SeatLock? @relation(fields: [seatLockId],references: [id])
+  createdAt DateTime
 }
 

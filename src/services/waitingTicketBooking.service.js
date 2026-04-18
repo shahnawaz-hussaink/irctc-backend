@@ -20,6 +20,8 @@ const waitingTicketBooking = async (
     const passengerData = passengers.map((p) => ({
         ...p,
         bookingId: booking.id,
+        passengerStatus: "WAITING",
+        createdAt: new Date(Date.now()),
     }));
     await txn.passengerInfo.createMany({ data: passengerData });
 

@@ -16,8 +16,19 @@ const waitingListWorker = new Worker(
                     where: { id: scheduleId },
                 });
                 while (true) {
-                    const nextWaiting = await txn.booking.findFirst({
-                        where: { scheduleId, coachType, status: "WAITING" },
+                    const nextWaiting = await txn.passengerInfo.findFirst({
+                        where: {
+                            booking: {
+                                scheduleId: scheduleId,
+                                coachType: coachType,
+                            },
+                            passengerStatus: "WAITING",
+                        },
+                        include : {
+                            booking : {
+                                select : {userId : true }
+                            }
+                        },
                         orderBy: { createdAt: "asc" },
                     });
 
@@ -43,9 +54,16 @@ const waitingListWorker = new Worker(
                         break;
                     }
 
-                    const updatedBooking = await txn.booking.updateMany({
+                    console.log(seat)
+
+                    await txn.passengerInfo.update({
                         where: { id: nextWaiting.id },
-                        data: { status: "CONFIRMED" },
+                        data : {passengerStatus : "CONFIRMED"}
+                    });
+
+                    const updatedBooking = await txn.booking.updateMany({
+                        where: { id: nextWaiting.bookingId },
+                        data: { status: "PARTIAL_CONFIRMED" },
                     });
 
                     if (updatedBooking.count === 0) {
@@ -54,16 +72,16 @@ const waitingListWorker = new Worker(
 
                     await txn.seatLock.create({
                         data: {
-                            userId: nextWaiting.userId,
+                            userId: nextWaiting.booking.userId,
                             seatId: seat.id,
                             scheduleId: schedule.id,
                             status: "BOOKED",
                             heldUntil: getTenMinTime(),
-                            bookingId: nextWaiting.id,
+                            bookingId: nextWaiting.bookingId,
                         },
                     });
                 }
-            });
+            },{ timeout: 30000 });
 
             console.log("Waiting List workedd ");
         }
