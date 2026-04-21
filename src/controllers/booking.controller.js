@@ -1,5 +1,6 @@
 import prisma from "../db/prisma.js";
 import myWaitingListQueue from "../queues/waitingList.queue.js";
+import bookingConfirmationMail from "../services/bookingConfirmationMail.service.js";
 import { waitingTicketBooking } from "../services/waitingTicketBooking.service.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
@@ -120,7 +121,7 @@ const bookSeat = asyncHandler(async (req, res) => {
             ...passenger,
             bookingId: newBooking.id,
             seatLockId: createdSeatLocks[idx].id,
-            createdAt : new Date(Date.now())
+            createdAt: new Date(Date.now()),
         }));
 
         await txn.passengerInfo.createMany({
@@ -136,6 +137,15 @@ const bookSeat = asyncHandler(async (req, res) => {
 
         return newBooking;
     });
+
+    const User = await prisma.user.findFirst({
+            where: { id: req.user.id },
+        });
+
+        console.log("i ran 1")
+        await bookingConfirmationMail(User.email, booking.id);
+
+    
     return res.status(200).json(new ApiResponse(200, booking, "Seat Booked"));
 });
 
@@ -371,7 +381,7 @@ const cancelPartialBooking = asyncHandler(async (req, res) => {
                 passengerInfo: {
                     id: { in: passengerIds },
                 },
-            }
+            },
         });
 
         await txn.passengerInfo.updateMany({

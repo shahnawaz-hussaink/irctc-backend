@@ -1,4 +1,5 @@
 import prisma from "../db/prisma.js";
+import bookingConfirmationMail from "./bookingConfirmationMail.service.js";
 
 // waitingTicketBooking.js
 const waitingTicketBooking = async (
@@ -24,6 +25,12 @@ const waitingTicketBooking = async (
         createdAt: new Date(Date.now()),
     }));
     await txn.passengerInfo.createMany({ data: passengerData });
+
+    const User = await txn.user.findFirst({
+        where: { id: booking.userId },
+    });
+    await bookingConfirmationMail(User.email, booking.id);
+
 
     return booking;
 };

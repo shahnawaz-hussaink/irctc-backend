@@ -32,6 +32,7 @@
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.5",
     "nodemon": "^3.1.14",
     "prisma": "^6.19.3"
   }
