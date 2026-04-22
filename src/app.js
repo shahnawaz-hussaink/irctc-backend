@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import startCronJobs from "./cron/seatCleanJob.js";
+import { globalRateLimiter } from "./middlewares/rateLimiter.js";
 
 const app = express();
 
@@ -22,17 +23,17 @@ app.use(
 
 app.use(cookieParser());
 
-startCronJobs()
+startCronJobs();
+
+app.use(globalRateLimiter);
 
 // routes
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import authRoute from "./routes/user.route.js";
-import adminRoute from './routes/admin.route.js'
-
-
+import adminRoute from "./routes/admin.route.js";
 
 app.use("/api/v1/user", authRoute);
-app.use("/api/v1/admin", adminRoute)
+app.use("/api/v1/admin", adminRoute);
 app.use(errorHandler);
 
 export { app };
