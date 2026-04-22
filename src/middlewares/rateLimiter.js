@@ -3,78 +3,43 @@ import { RedisStore } from "rate-limit-redis";
 import redisConnection from "../config/redis.config.js";
 import { ApiError } from "../utils/apiError.js";
 
-const globalRateLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    limit: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-        sendCommand: (...args) => redisConnection.call(...args),
-    }),
-    handler: (req, res, next, options) => {
-        return next(
-            new ApiError(
-                options.statusCode || 429,
-                "Too many Requests , Please wait before trying again"
-            )
-        );
-    },
-});
+const createRateLimiter = (limit, message, keyGenerator) => {
+    return rateLimit({
+        windowMs: 60 * 1000,
+        limit,
+        keyGenerator,
+        standardHeaders: true,
+        legacyHeaders: false,
+        store: new RedisStore({
+            sendCommand: (...args) => redisConnection.call(...args),
+        }),
+        handler: (req, res, next, options) => {
+            return next(new ApiError(options.statusCode || 429, message));
+        },
+    });
+};
 
-const authRateLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    limit: 10,
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-        sendCommand: (...args) => redisConnection.call(...args),
-    }),
-    handler: (req, res, next, options) => {
-        return next(
-            new ApiError(
-                options.statusCode || 429,
-                "Too Many Requests , Please wait before you try Again"
-            )
-        );
-    },
-});
+const globalRateLimiter = createRateLimiter(
+    100,
+    "Too many Requests , Please wait before trying again"
+);
 
-const bookingRateLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    limit: 3,
-    keyGenerator: (req) => `booking:${req.userId} || ${ipKeyGenerator(req)}`,
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-        sendCommand: (...args) => redisConnection.call(...args),
-    }),
-    handler: (req, res, next, options) => {
-        return next(
-            new ApiError(
-                options.statusCode || 429,
-                "Too Many Requests , Plese wait before booking ticket"
-            )
-        );
-    },
-});
+const authRateLimiter = createRateLimiter(
+    10,
+    "Too Many Requests , Please wait before you try Again"
+);
 
-const searchRateLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    limit: 50,
-    standardHeaders: true,
-    legacyHeaders: false,
-    store: new RedisStore({
-        sendCommand: (...args) => redisConnection.call(...args),
-    }),
-    handler: (req, res, next, options) => {
-        return next(
-            new ApiError(
-                options.statusCode || 429,
-                "Too Many Requests, Please SEarch in a while"
-            )
-        );
-    },
-});
+const bookingRateLimiter = createRateLimiter(
+    5,
+    "Too Many Requests , Plese wait before booking ticket",
+    (req) => `booking:${req.userId} || ${ipKeyGenerator(req)}`
+);
+
+const searchRateLimiter = createRateLimiter(
+    5,
+    "Too Many Requests, Please SEarch in a while",
+    (req) => ipKeyGenerator(req)
+);
 
 export {
     globalRateLimiter,

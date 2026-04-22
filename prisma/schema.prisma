@@ -171,7 +171,7 @@ model PassengerInfo {
   bookingId Int 
   passengerStatus passengerStatus @default(CONFIRMED)
   seatLockId Int? @unique 
-  booking Booking @relation(fields: [bookingId], references: [id])
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   seatLock SeatLock? @relation(fields: [seatLockId],references: [id])
   createdAt DateTime
 }

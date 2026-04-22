@@ -21,7 +21,9 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
         throw new ApiError(404, "NO Schedule Found");
     }
 
+    console.log("I ran 1");
     await seatCleanup();
+    console.log("I ran 2");
 
     const totalSeatInCoach = await prisma.seat.findMany({
         where: {
@@ -42,7 +44,7 @@ const getAvailableSeats = asyncHandler(async (req, res) => {
     const lockedSeats = await prisma.seatLock.findMany({
         where: {
             scheduleId,
-            status: { not : "CANCELLED" },
+            status: { not: "CANCELLED" },
             seat: {
                 coach: {
                     coachType,
