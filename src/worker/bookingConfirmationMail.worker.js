@@ -77,7 +77,7 @@ const bookingConfirmationMailWorker = new Worker(
         const html = `
             <body>
                 <div>
-                    <h1>Booking ${booking.status === "CONFIRMED" ? "✅ Confirmed" : booking.status}</h1>
+                    <h1>Booking ${booking.status === "CONFIRMED" ? "Confirmed" : booking.status}</h1>
                     <p>PNR Number: <b>${booking.pnr}</b></p>
                     <p>Date: <b>${new Date(booking.schedule.date).toDateString()}</b></p>
                     <p>Source Platform: <b>${booking.schedule.sourcePlatform.platformNumber}</b></p>
